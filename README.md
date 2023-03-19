@@ -1,1 +1,1 @@
-# COS398_CatanAI
+# Catan AI
