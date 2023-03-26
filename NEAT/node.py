@@ -1,5 +1,7 @@
 import numpy as np
 
+from connection_gene import ConnectionGene
+
 class Node:
     def __init__(self, label, layer=0):
         self.label = label

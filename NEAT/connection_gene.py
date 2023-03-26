@@ -1,5 +1,7 @@
 import numpy as np
 
+from node import Node
+
 class ConnectionGene:
     def __init__(self, from_node, to_node, weight, innovation_label, enabled=True):
       self.from_node = from_node
