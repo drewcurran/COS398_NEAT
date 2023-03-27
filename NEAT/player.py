@@ -22,6 +22,7 @@ class Player:
         for vp in opponents_victory_points:
             self.fitness += victory_points - vp
 
+    # Create child player with self and another player as parents
     def crossover(self, player):
         child = Player(self.inputs, self.outputs)
         child.nn = self.nn.crossover(player.nn)

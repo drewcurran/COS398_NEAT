@@ -31,3 +31,9 @@ class Genome:
     def forward_pass(self, input_values):
         for i in range(self.inputs):
             self.inputs[i].output_value = input_values[i]
+        self.nodes[self.bias_node].output_value = 1
+
+        for node in self.nodes:
+            node.get_value()
+        
+        
