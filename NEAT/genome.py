@@ -4,6 +4,8 @@ Description: The genome is the blueprint for the neural network.
 Author: Drew Curran
 '''
 
+import numpy as np
+
 from node import Node
 from connection_gene import ConnectionGene
 
@@ -40,7 +42,7 @@ class Genome:
         self.nodes[layer].append(node)
         self.num_nodes += 1
     
-    ### Connects nodes
+    ### Connect the nodes with connection genes
     def connect_nodes(self):
         # Delete output connections for all nodes
         for _, layer_nodes in self.nodes:
@@ -53,35 +55,30 @@ class Genome:
 
     ### Forward pass
     def forward_pass(self, input_values):
-        # Set bias node to 1
-        self.nodes[self.layer_indices[0]].output_value = 1
-
-        # Set input node values to given values
-        for i in range(self.inputs):
-            self.inputs[self.layer_indices[1] + i].output_value = input_values[i]
-
-        # Send value across connections for all the nodes in the genome by layer
-        for node in self.nodes:
-            node.send_value()
+        # Input values must be same size and inputs and have bias value 1
+        assert len(self.nodes[self.layer_indices[0]]) == len(input_values)
+        assert input_values[0] == 1
         
-        # Get output node values
         out = []
-        for _ in range(self.outputs):
-            out[i] = self.nodes[self.inputs + i].output_value
+
+        for layer, layer_nodes in self.nodes:
+            for n in range(len(layer_nodes)):
+                # Send value across connections for all the nodes
+                if layer == 0:
+                    layer_nodes[n].send_value(input_values[n])
+                else:
+                    layer_nodes[n].send_value()
+
+                # Get output node values
+                if layer == self.num_layers - 1:
+                    out[n] = layer_nodes[n].output_value
         
-        for node in self.nodes:
-            node.input_value = 0
+        # Reset node values
+        for _, layer_nodes in self.nodes:
+            for node in layer_nodes:
+                node.input_value = 0
         
         return out
-    
-    # Set up neural network
-    def generate_network(self):
-        self.connect_nodes()
-        self.network = []
-        for l in range(self.layers):
-            for node in self.nodes:
-                if (node.layer == l):
-                    self.network.append(node)
 
     # Mutate the genome
     def mutate(self):

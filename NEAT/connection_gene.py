@@ -18,10 +18,13 @@ class ConnectionGene:
     
     ### Change the weight
     def mutate_weight(self):
-        if (np.random.uniform() < 0.1): # Mutate 10% of the time
+        # Mutate 10% of the time
+        if (np.random.uniform() < 0.1):
             self.weight = np.random.uniform(-1, 1)
-        else: # Slight change if not mutated
-            self.weight += np.random.normal() / 50
+        # Slight change if not mutated
+        else:
+            self.weight += np.random.normal(0, 0.02)
+        # Keep within bounds
         if self.weight > 1:
            self.weight = 1
         elif self.weight < -1:
@@ -30,5 +33,4 @@ class ConnectionGene:
     ### Return a copy
     def clone(self, from_node, to_node):
         clone = ConnectionGene(from_node, to_node, self.weight, self.innovation_label, enabled=self.enabled)
-        clone.enabled = self.enabled
         return clone

@@ -4,8 +4,6 @@ Description: The connection history allows to test if a genome is the same as a 
 Author: Drew Curran
 '''
 
-import numpy as np
-
 from node import Node
 
 class ConnectionHistory:
