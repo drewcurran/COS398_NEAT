@@ -1,61 +1,73 @@
-import numpy as np
+'''
+genome.py
+Description: The genome is the blueprint for the neural network.
+Author: Drew Curran
+'''
 
 from node import Node
+from connection_gene import ConnectionGene
 
 class Genome:
-    def __init__(self, inputs, outputs, layers=2):
-        self.inputs = inputs
-        self.outputs = outputs
-        self.layers = layers
+    def __init__(self, num_inputs, num_outputs, num_layers=2):
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
+        self.num_layers = num_layers
+        self.genes = []
+        self.nodes = {}
+        self.num_nodes = 0
 
-        self.next_node = 0
-        self.nodes = []
-        for i in range(self.inputs):
-            node = Node(i)
-            self.nodes.append(node)
-            node.layer = 0
-            self.next_node += 1
+        # Add input nodes (including bias node)
+        self.nodes[0] = []
+        self.add_node(0)
+        for _ in range(self.num_inputs):
+            self.add_node(0)
 
-        for o in range(self.outputs):
-            node = Node(o + self.inputs)
-            self.nodes.append(node)
-            node.layer = 1
-            self.next_node += 1
-        
-        self.bias_node = Node(self.next_node)
-        
-        self.genes = None
-        
-        
-        
-        self.network = None
+        # Add output nodes
+        self.nodes[self.num_layers - 1] = []
+        for _ in range(self.outputs):
+            self.add_node(self.num_layers - 1)
 
-    # Get node with matching label
+    ### Get node with matching label
     def get_node(self, label):
-        for i in range(self.nodes.size()):
-            if self.nodes.get(i).label == label:
-                return self.nodes.get(i)
+        for i in range(len(self.nodes)):
+            if self.nodes[i].label == label:
+                return self.nodes[i]
         return None
     
-    # Connects nodes
+    ### Add a node to the genome
+    def add_node(self, layer):
+        node = Node(self.num_nodes, layer = layer)
+        self.nodes[layer].append(node)
+        self.num_nodes += 1
+    
+    ### Connects nodes
     def connect_nodes(self):
-        for node in self.nodes:
-            node.output_connections = None
+        # Delete output connections for all nodes
+        for _, layer_nodes in self.nodes:
+            for node in layer_nodes:
+                node.output_connections = []
+
+        # Add connection for every connection gene
         for connection_gene in self.genes:
-            connection_gene.from_node.output_connections.add(connection_gene)
+            connection_gene.from_node.output_connections.append(connection_gene)
 
-    # Forward pass
+    ### Forward pass
     def forward_pass(self, input_values):
-        for i in range(self.inputs):
-            self.inputs[i].output_value = input_values[i]
-        self.nodes[self.bias_node].output_value = 1
+        # Set bias node to 1
+        self.nodes[self.layer_indices[0]].output_value = 1
 
-        for node in self.network:
-            node.get_value()
+        # Set input node values to given values
+        for i in range(self.inputs):
+            self.inputs[self.layer_indices[1] + i].output_value = input_values[i]
+
+        # Send value across connections for all the nodes in the genome by layer
+        for node in self.nodes:
+            node.send_value()
         
+        # Get output node values
         out = []
-        for i in range(self.outputs):
-            out[i] = self.nodes.get(self.inputs + i)
+        for _ in range(self.outputs):
+            out[i] = self.nodes[self.inputs + i].output_value
         
         for node in self.nodes:
             node.input_value = 0
