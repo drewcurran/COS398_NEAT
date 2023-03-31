@@ -7,6 +7,7 @@ Author: Drew Curran
 import numpy as np
 
 from node import Node
+from helper_functions import sigmoid
 
 class ConnectionGene:
     def __init__(self, from_node, to_node, weight, innovation_label, enabled=True):
@@ -29,6 +30,15 @@ class ConnectionGene:
            self.weight = 1
         elif self.weight < -1:
            self.weight = -1
+
+    ### Send output of a node to input of a second node
+    def send_value(self):
+        # For each connection, add output times respective weight to the respective node input
+        if self.enabled:
+            if self.from_node.layer == 0:
+                self.to_node.input_value += self.from_node.input_value * self.weight
+            else:
+                self.to_node.input_value = sigmoid(self.from_node.input_value) * self.weight
 
     ### Return a copy
     def clone(self, from_node, to_node):
