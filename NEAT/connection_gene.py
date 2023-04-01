@@ -42,8 +42,8 @@ class ConnectionGene(metaclass=MetaClass):
                 self.to_node.input_value = sigmoid(self.from_node.input_value) * self.weight
 
     ### Return a copy
-    def clone(self, from_node, to_node):
-        clone = ConnectionGene(from_node, to_node, self.weight, self.innovation_label, enabled=self.enabled)
+    def clone(self):
+        clone = ConnectionGene(self.from_node, self.to_node, self.weight, self.innovation_label, enabled=self.enabled)
         return clone
 
     ### To string

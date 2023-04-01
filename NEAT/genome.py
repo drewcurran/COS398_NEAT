@@ -11,10 +11,10 @@ from connection_gene import ConnectionGene
 from connection_history import ConnectionHistory
 
 class Genome:
-    def __init__(self, num_inputs, num_outputs):
+    def __init__(self, num_inputs, num_outputs, num_layers = 2):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
-        self.num_layers = 2
+        self.num_layers = num_layers
         self.nodes = {}
         self.num_nodes = 0
         self.genes = []
@@ -274,9 +274,11 @@ class Genome:
 
                     # Inheritance from mate
                     if np.random.uniform() < 0.5:
-                        gene = mate_gene.copy()
+                        gene = mate_gene.clone()
 
                     gene.enabled = enabled
+        
+        return child
     
     ### Return a copy
     def clone(self):
@@ -285,6 +287,7 @@ class Genome:
         # Copy the nodes
         nodes = {}
         for layer, layer_nodes in self.nodes.items():
+            nodes[layer] = []
             for node in layer_nodes:
                 nodes[layer].append(node.clone())
         clone.nodes = nodes
@@ -300,7 +303,7 @@ class Genome:
 
         return clone
 
-def print_state(genome, history, nodes = [], connections = []):
+def print_state(genome, history = [], nodes = [], connections = []):
     print("\tState")
     print("\tNodes: %d (%d), %s" % (genome.num_nodes, genome.num_layers, genome.nodes))
     print("\tConnections: %d, %s" % (genome.num_genes, genome.genes))
@@ -316,61 +319,77 @@ def main():
 
     print("Initializing genome1")
     genome1 = Genome(1, 1)
-    print_state(genome1, history)
+    print_state(genome1, history=history)
 
     print("General mutation")
     nodes, connections = genome1.mutate_genome(history)
-    print_state(genome1, history, nodes=nodes, connections=connections)
+    print_state(genome1, history=history, nodes=nodes, connections=connections)
 
     print("Node mutation")
     nodes, connections = genome1.mutate_node(history)
-    print_state(genome1, history, nodes=nodes, connections=connections)
+    print_state(genome1, history=history, nodes=nodes, connections=connections)
 
     print("Gene mutation")
     connection = genome1.mutate_connection(history)
-    print_state(genome1, history, connections=[connection])
+    print_state(genome1, history=history, connections=[connection])
 
     print("Node mutation")
     nodes, connections = genome1.mutate_node(history)
-    print_state(genome1, history, nodes=nodes, connections=connections)
+    print_state(genome1, history=history, nodes=nodes, connections=connections)
 
     print("\n")
 
     print("Initializing genome2")
     genome2 = Genome(1, 1)
-    print_state(genome2, history)
+    print_state(genome2, history=history)
 
     print("General mutation")
     nodes, connections = genome2.mutate_genome(history)
-    print_state(genome2, history, nodes=nodes, connections=connections)
+    print_state(genome2, history=history, nodes=nodes, connections=connections)
 
     print("Node mutation")
     nodes, connections = genome2.mutate_node(history)
-    print_state(genome2, history, nodes=nodes, connections=connections)
+    print_state(genome2, history=history, nodes=nodes, connections=connections)
 
     print("Gene mutation")
     connection = genome2.mutate_connection(history)
-    print_state(genome2, history, connections=[connection])
+    print_state(genome2, history=history, connections=[connection])
 
     print("Node mutation")
     nodes, connections = genome2.mutate_node(history)
-    print_state(genome2, history, nodes=nodes, connections=connections)
+    print_state(genome2, history=history, nodes=nodes, connections=connections)
 
     print("Gene mutation")
     connection = genome2.mutate_connection(history)
-    print_state(genome2, history, connections=[connection])
+    print_state(genome2, history=history, connections=[connection])
 
     print("Node mutation")
     nodes, connections = genome2.mutate_node(history)
-    print_state(genome2, history, nodes=nodes, connections=connections)
+    print_state(genome2, history=history, nodes=nodes, connections=connections)
 
     print("Gene mutation")
     connection = genome2.mutate_connection(history)
-    print_state(genome2, history, connections=[connection])
+    print_state(genome2, history=history, connections=[connection])
 
     print("Node mutation")
     nodes, connections = genome2.mutate_node(history)
-    print_state(genome2, history, nodes=nodes, connections=connections)
+    print_state(genome2, history=history, nodes=nodes, connections=connections)
+
+    print("\n")
+
+    print("genome1")
+    print_state(genome1)
+
+    print("genome2")
+    print_state(genome2)
+
+    print("Crossover genome1 with genome 2 to create genome3")
+    genome3 = genome1.crossover(genome2)
+    print_state(genome3)
+
+    print("Crossover genome2 with genome 1 to create genome4")
+    genome4 = genome2.crossover(genome1)
+    print_state(genome4)
 
 if __name__ == '__main__':
     main()
