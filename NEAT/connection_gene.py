@@ -8,8 +8,9 @@ import numpy as np
 
 from node import Node
 from helper_functions import sigmoid
+from metaclass import MetaClass
 
-class ConnectionGene:
+class ConnectionGene(metaclass=MetaClass):
     def __init__(self, from_node, to_node, weight, innovation_label, enabled=True):
       self.from_node = from_node
       self.to_node = to_node
@@ -44,3 +45,9 @@ class ConnectionGene:
     def clone(self, from_node, to_node):
         clone = ConnectionGene(from_node, to_node, self.weight, self.innovation_label, enabled=self.enabled)
         return clone
+
+    ### To string
+    def __str__(self):
+        return "Gene(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.innovation_label, self.enabled)
+    def __repr__(self):
+        return "Gene(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.innovation_label, self.enabled)

@@ -5,8 +5,9 @@ Author: Drew Curran
 '''
 
 from node import Node
+from metaclass import MetaClass
 
-class ConnectionHistory:
+class ConnectionHistory(metaclass=MetaClass):
     def __init__(self, from_node, to_node, innovation_label, gene_labels):
         self.from_node = from_node
         self.to_node = to_node
@@ -22,3 +23,9 @@ class ConnectionHistory:
                         return False
                 return True
         return False
+    
+    ### To string
+    def __str__(self):
+        return "History(%s->%s,I=%d,G=%s)" % (self.from_node, self.to_node, self.innovation_label, self.initial_genome)
+    def __repr__(self):
+        return "History(%s->%s,I=%d,G=%s)" % (self.from_node, self.to_node, self.innovation_label, self.initial_genome)
