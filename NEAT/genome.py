@@ -51,29 +51,32 @@ class Genome:
     ### Add a connection gene to the genome
     def add_connection(self, history, from_node, to_node, weight=1):
         # Only proceed if the connection does not exist
+        label = None
         if self.is_connection(from_node, to_node):
             return None
-        
+
         # Retrieve the genome label if mutation already exists
         for gene in history:
             if gene.matches(self, from_node, to_node):
-                return gene.innovation_label
+                label = gene.innovation_label
         
         # Make a new mutation
         gene_labels = []
         for gene in self.genes:
             gene_labels.append(gene.innovation_label)
-        mutation = ConnectionHistory(from_node.label, to_node.label, self.num_genes, gene_labels)
-        history.append(mutation)
+        if label is None:
+            label = len(history)
+            mutation = ConnectionHistory(from_node.label, to_node.label, label, gene_labels)
+            history.append(mutation)
 
         # Add connection to genome
-        connection = ConnectionGene(from_node, to_node, weight, self.num_genes)
+        connection = ConnectionGene(from_node, to_node, weight, label)
         self.genes.append(connection)
         self.num_genes += 1
         if not self.non_bias_connection and connection.from_node != self.bias_node:
             self.non_bias_connection = True
 
-        return connection, history
+        return connection
 
     ### Refresh constant values
     def refresh_constants(self):
@@ -131,7 +134,7 @@ class Genome:
     def mutate_node(self, history):
         # Escape if there are only bias connections
         if not self.non_bias_connection:
-            return None
+            return None, None
 
         # Find a connection without the bias node (bias should not be disconnected)
         connection = self.genes[np.random.randint(len(self.genes))]
@@ -141,35 +144,44 @@ class Genome:
         # Disable the connection between the two nodes
         connection.enabled = False
 
-        # Add a new node with layer one more than the from node
-        new_node = self.add_node(connection.from_node.layer + 1)
-
-        # Make connection between from node and new node
-        self.add_connection(history, connection.from_node, new_node, weight=1)
-
-        # Make connection between new node and to node
-        self.add_connection(history, new_node, connection.to_node, weight=connection.weight)
-
-        # Make connection between bias node and new node
-        self.add_connection(history, self.bias_node, new_node, weight=0)
-
         # Adjust layers to consider the new node
-        if new_node.layer == connection.to_node.layer:
-            self.nodes[new_node.layer].remove(new_node)
+        node_layer = connection.from_node.layer + 1
+        if node_layer == connection.to_node.layer:
             for layer, layer_nodes in sorted(self.nodes.items(), reverse=True):
-                if layer < new_node.layer:
+                if layer < connection.to_node.layer:
                     break
                 for node in layer_nodes:
                     node.layer += 1
                 self.nodes[layer + 1] = self.nodes.pop(layer)
-            self.nodes[new_node.layer] = []
-            self.nodes[new_node.layer].append(new_node)
+            self.nodes[node_layer] = []
             self.nodes = dict(sorted(self.nodes.items()))
+
+        # List of nodes made
+        nodes = []
+
+        # Add a new node with layer one more than the from node
+        node = self.add_node(connection.from_node.layer + 1)
+        nodes.append(node)
+
+        # List of connections made
+        connections = []
+
+        # Make connection between from node and new node
+        new_connection = self.add_connection(history, connection.from_node, node, weight=1)
+        connections.append(new_connection)
+
+        # Make connection between new node and to node
+        new_connection = self.add_connection(history, node, connection.to_node, weight=connection.weight)
+        connections.append(new_connection)
+
+        # Make connection between bias node and new node
+        new_connection = self.add_connection(history, self.bias_node, node, weight=0)
+        connections.append(new_connection)
 
         # Refresh
         self.refresh_constants()
 
-        return new_node
+        return nodes, connections
 
     ### Mutate the genome by adding a new connection
     def mutate_connection(self, history):
@@ -198,16 +210,22 @@ class Genome:
             to_node = node1
         
         # Make connection between from node and to node
-        connection, history = self.add_connection(history, from_node, to_node, weight=np.random.uniform(-1, 1))
+        connection = self.add_connection(history, from_node, to_node, weight=np.random.uniform(-1, 1))
 
-        return connection, history
+        return connection
     
     ### General mutation for the genome
     def mutate_genome(self, history):
+        # List of nodes made
+        nodes = []
+
+        # List of connections made
+        connections = []
+
         # Mutate connection
-        connection = None
         if np.random.uniform() < 0.05 or len(self.genes) == 0:
-            connection, history = self.mutate_connection(history)
+            connection = self.mutate_connection(history)
+            connections.append(connection)
         
         # Mutate weights
         if np.random.uniform() < 0.8:
@@ -215,11 +233,12 @@ class Genome:
                 gene.mutate_weight()
         
         # Mutate node
-        node = None
         if np.random.uniform() < 0.01:
-            node, history = self.mutate_node(history)
+            node, node_connections = self.mutate_node(history)
+            nodes.append(node)
+            connections.append(node_connections)
 
-        return connection, history, node
+        return nodes, connections
 
     ### Determine if two nodes are connected
     def is_connection(self, node1, node2, layer_check=False):
@@ -280,91 +299,78 @@ class Genome:
         clone.refresh_constants()
 
         return clone
-    
+
+def print_state(genome, history, nodes = [], connections = []):
+    print("\tState")
+    print("\tNodes: %d (%d), %s" % (genome.num_nodes, genome.num_layers, genome.nodes))
+    print("\tConnections: %d, %s" % (genome.num_genes, genome.genes))
+    print("\tHistory: %s" % history)
+    print()
+    print("\tMutations")    
+    print("\tNodes: %s" % nodes)
+    print("\tConnections: %s" % connections)
+    print("\n")    
+
 def main():
     history = []
 
-    print("Initializing genome 1")
-    genome1 = Genome(2, 3)
-    print("\tNodes: %d, %s" % (genome1.num_nodes, genome1.nodes))
-    print("\tConnections: %d, %s" % (genome1.num_genes, genome1.genes))
-    print("\n")
+    print("Initializing genome1")
+    genome1 = Genome(1, 1)
+    print_state(genome1, history)
 
     print("General mutation")
-    connection, history, node = genome1.mutate_genome(history)
-    print("\tNodes: %d, %s" % (genome1.num_nodes, genome1.nodes))
-    print("\tConnections: %d, %s" % (genome1.num_genes, genome1.genes))
-    print()
-    print("\tConnection: %s" % connection)
-    print("\tHistory: %s" % history)
-    print("\tNode: %s" % node)
-    print("\n")    
+    nodes, connections = genome1.mutate_genome(history)
+    print_state(genome1, history, nodes=nodes, connections=connections)
 
     print("Node mutation")
-    node = genome1.mutate_node(history)
-    print("\tNodes: %d, %s" % (genome1.num_nodes, genome1.nodes))
-    print("\tConnections: %d, %s" % (genome1.num_genes, genome1.genes))
-    print()
-    print("\tNode: %s" % node)
-    print("\n")
+    nodes, connections = genome1.mutate_node(history)
+    print_state(genome1, history, nodes=nodes, connections=connections)
 
     print("Gene mutation")
-    connection, history = genome1.mutate_connection(history)
-    print("\tNodes: %d, %s" % (genome1.num_nodes, genome1.nodes))
-    print("\tConnections: %d, %s" % (genome1.num_genes, genome1.genes))
-    print()
-    print("\tConnection: %s" % connection)
-    print("\tMutation: %s" % history)
-    print("\n")
+    connection = genome1.mutate_connection(history)
+    print_state(genome1, history, connections=[connection])
 
     print("Node mutation")
-    node = genome1.mutate_node(history)
-    print("\tNodes: %d, %s" % (genome1.num_nodes, genome1.nodes))
-    print("\tConnections: %d, %s" % (genome1.num_genes, genome1.genes))
-    print()
-    print("\tNode: %s" % node)
+    nodes, connections = genome1.mutate_node(history)
+    print_state(genome1, history, nodes=nodes, connections=connections)
+
     print("\n")
 
-    print("Initializing genome 2")
-    genome2 = Genome(2, 3)
-    print("\tNodes: %d, %s" % (genome2.num_nodes, genome2.nodes))
-    print("\tConnections: %d, %s" % (genome2.num_genes, genome2.genes))
-    print("\n")
+    print("Initializing genome2")
+    genome2 = Genome(1, 1)
+    print_state(genome2, history)
 
     print("General mutation")
-    connection, history, node = genome2.mutate_genome(history)
-    print("\tNodes: %d, %s" % (genome2.num_nodes, genome2.nodes))
-    print("\tConnections: %d, %s" % (genome2.num_genes, genome2.genes))
-    print()
-    print("\tConnection: %s" % connection)
-    print("\tHistory: %s" % history)
-    print("\tNode: %s" % node)
-    print("\n")    
+    nodes, connections = genome2.mutate_genome(history)
+    print_state(genome2, history, nodes=nodes, connections=connections)
 
     print("Node mutation")
-    node = genome2.mutate_node(history)
-    print("\tNodes: %d, %s" % (genome2.num_nodes, genome2.nodes))
-    print("\tConnections: %d, %s" % (genome2.num_genes, genome2.genes))
-    print()
-    print("\tNode: %s" % node)
-    print("\n")
+    nodes, connections = genome2.mutate_node(history)
+    print_state(genome2, history, nodes=nodes, connections=connections)
 
     print("Gene mutation")
-    connection, history = genome2.mutate_connection(history)
-    print("\tNodes: %d, %s" % (genome2.num_nodes, genome2.nodes))
-    print("\tConnections: %d, %s" % (genome2.num_genes, genome2.genes))
-    print()
-    print("\tConnection: %s" % connection)
-    print("\tMutation: %s" % history)
-    print("\n")
+    connection = genome2.mutate_connection(history)
+    print_state(genome2, history, connections=[connection])
 
     print("Node mutation")
-    node = genome2.mutate_node(history)
-    print("\tNodes: %d, %s" % (genome2.num_nodes, genome2.nodes))
-    print("\tConnections: %d, %s" % (genome2.num_genes, genome2.genes))
-    print()
-    print("\tNode: %s" % node)
-    print("\n")
+    nodes, connections = genome2.mutate_node(history)
+    print_state(genome2, history, nodes=nodes, connections=connections)
+
+    print("Gene mutation")
+    connection = genome2.mutate_connection(history)
+    print_state(genome2, history, connections=[connection])
+
+    print("Node mutation")
+    nodes, connections = genome2.mutate_node(history)
+    print_state(genome2, history, nodes=nodes, connections=connections)
+
+    print("Gene mutation")
+    connection = genome2.mutate_connection(history)
+    print_state(genome2, history, connections=[connection])
+
+    print("Node mutation")
+    nodes, connections = genome2.mutate_node(history)
+    print_state(genome2, history, nodes=nodes, connections=connections)
 
 if __name__ == '__main__':
     main()
