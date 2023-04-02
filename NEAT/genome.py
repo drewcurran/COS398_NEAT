@@ -5,6 +5,7 @@ Author: Drew Curran
 '''
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 from node import Node
 from connection_gene import ConnectionGene
@@ -302,94 +303,41 @@ class Genome:
         clone.refresh_constants()
 
         return clone
+    
+    ### Print state of the genome
+    def print_state(self, history = [], nodes = [], connections = []):
+        print("\tState")
+        print("\tNodes: %d (%d), %s" % (self.num_nodes, self.num_layers, self.nodes))
+        print("\tConnections: %d, %s" % (self.num_genes, self.genes))
+        if history:
+            print("\tHistory: %s" % history)
+        if nodes or connections:
+            print("\n\tMutations")
+        if nodes:
+            print("\tNodes: %s" % nodes)
+        if connections:
+            print("\tConnections: %s" % connections)
+        print("\n")
 
-def print_state(genome, history = [], nodes = [], connections = []):
-    print("\tState")
-    print("\tNodes: %d (%d), %s" % (genome.num_nodes, genome.num_layers, genome.nodes))
-    print("\tConnections: %d, %s" % (genome.num_genes, genome.genes))
-    print("\tHistory: %s" % history)
-    print()
-    print("\tMutations")    
-    print("\tNodes: %s" % nodes)
-    print("\tConnections: %s" % connections)
-    print("\n")    
+    ### Draw the state of the genome
+    def draw_state(self):
+        _, ax = plt.subplots()
 
-def main():
-    history = []
+        # Draw nodes
+        for layer_nodes in self.nodes.values():
+            for i in range(len(layer_nodes)):
+                node = layer_nodes[i]
+                node.draw_location = (len(layer_nodes) - 1) / 2 - i
+                circle = plt.Circle((node.layer, node.draw_location), radius=0.1, label=node.label, color="black", zorder=2)
+                plt.gca().add_patch(circle)
+                ax.annotate(node.label, xy=(node.layer, node.draw_location), fontsize=12, ha="center", va="center", color="white", zorder=3)
 
-    print("Initializing genome1")
-    genome1 = Genome(1, 1)
-    print_state(genome1, history=history)
-
-    print("General mutation")
-    nodes, connections = genome1.mutate_genome(history)
-    print_state(genome1, history=history, nodes=nodes, connections=connections)
-
-    print("Node mutation")
-    nodes, connections = genome1.mutate_node(history)
-    print_state(genome1, history=history, nodes=nodes, connections=connections)
-
-    print("Gene mutation")
-    connection = genome1.mutate_connection(history)
-    print_state(genome1, history=history, connections=[connection])
-
-    print("Node mutation")
-    nodes, connections = genome1.mutate_node(history)
-    print_state(genome1, history=history, nodes=nodes, connections=connections)
-
-    print("\n")
-
-    print("Initializing genome2")
-    genome2 = Genome(1, 1)
-    print_state(genome2, history=history)
-
-    print("General mutation")
-    nodes, connections = genome2.mutate_genome(history)
-    print_state(genome2, history=history, nodes=nodes, connections=connections)
-
-    print("Node mutation")
-    nodes, connections = genome2.mutate_node(history)
-    print_state(genome2, history=history, nodes=nodes, connections=connections)
-
-    print("Gene mutation")
-    connection = genome2.mutate_connection(history)
-    print_state(genome2, history=history, connections=[connection])
-
-    print("Node mutation")
-    nodes, connections = genome2.mutate_node(history)
-    print_state(genome2, history=history, nodes=nodes, connections=connections)
-
-    print("Gene mutation")
-    connection = genome2.mutate_connection(history)
-    print_state(genome2, history=history, connections=[connection])
-
-    print("Node mutation")
-    nodes, connections = genome2.mutate_node(history)
-    print_state(genome2, history=history, nodes=nodes, connections=connections)
-
-    print("Gene mutation")
-    connection = genome2.mutate_connection(history)
-    print_state(genome2, history=history, connections=[connection])
-
-    print("Node mutation")
-    nodes, connections = genome2.mutate_node(history)
-    print_state(genome2, history=history, nodes=nodes, connections=connections)
-
-    print("\n")
-
-    print("genome1")
-    print_state(genome1)
-
-    print("genome2")
-    print_state(genome2)
-
-    print("Crossover genome1 with genome 2 to create genome3")
-    genome3 = genome1.crossover(genome2)
-    print_state(genome3)
-
-    print("Crossover genome2 with genome 1 to create genome4")
-    genome4 = genome2.crossover(genome1)
-    print_state(genome4)
-
-if __name__ == '__main__':
-    main()
+        # Draw genes
+        for gene in self.genes:
+            if gene.enabled:
+                line = plt.Line2D((gene.from_node.layer, gene.to_node.layer), (gene.from_node.draw_location, gene.to_node.draw_location), zorder=1)
+                plt.gca().add_line(line)
+        
+        # Config
+        plt.axis('scaled')
+        plt.axis('off')
