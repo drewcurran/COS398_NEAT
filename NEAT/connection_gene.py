@@ -7,7 +7,7 @@ Author: Drew Curran
 import numpy as np
 
 from node import Node
-from helper_functions import sigmoid
+from helper_functions import relu
 from metaclass import MetaClass
 
 class ConnectionGene(metaclass=MetaClass):
@@ -39,7 +39,7 @@ class ConnectionGene(metaclass=MetaClass):
             if self.from_node.layer == 0:
                 self.to_node.input_value += self.from_node.input_value * self.weight
             else:
-                self.to_node.input_value = sigmoid(self.from_node.input_value) * self.weight
+                self.to_node.input_value += relu(self.from_node.input_value) * self.weight
 
     ### Return a copy
     def clone(self):

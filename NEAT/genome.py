@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 from node import Node
 from connection_gene import ConnectionGene
 from connection_history import ConnectionHistory
+from helper_functions import sigmoid
 
 class Genome:
     def __init__(self, num_inputs, num_outputs, num_layers = 2):
@@ -107,7 +108,7 @@ class Genome:
             node.input_value = input_values[node.label]
 
         # Sort the genes according to from node layer
-        self.genes.sort(self.genes, key=lambda k: k.from_node.layer)
+        self.genes.sort(key=lambda k: k.from_node.layer)
 
         # Propagate through the network
         for gene in self.genes:
@@ -117,7 +118,7 @@ class Genome:
 
         for node in self.nodes[self.num_layers - 1]:
             # Get output node values
-            out.append(node.get_output_value())
+            out.append(sigmoid(node.input_value))
         
         # Reset node values
         for layer_nodes in self.nodes.values():
