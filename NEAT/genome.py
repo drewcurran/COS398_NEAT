@@ -268,10 +268,11 @@ class Genome:
         for gene in child.genes:
             for mate_gene in mate.genes:
                 if mate_gene.innovation_label == gene.innovation_label:
-                    # Disable gene
-                    enabled = True
+                    # Determine whether the gene is enabled
                     if not gene.enabled or not mate_gene.enabled:
-                        enabled = np.random.uniform() < 0.75
+                        enabled = np.random.uniform() < 0.25
+                    else:
+                        enabled = True
 
                     # Inheritance from mate
                     if np.random.uniform() < 0.5:
@@ -335,7 +336,7 @@ class Genome:
         # Draw genes
         for gene in self.genes:
             if gene.enabled:
-                line = plt.Line2D((gene.from_node.layer, gene.to_node.layer), (gene.from_node.draw_location, gene.to_node.draw_location), color="black", zorder=4)
+                line = plt.Line2D((gene.from_node.layer, gene.to_node.layer), (gene.from_node.draw_location, gene.to_node.draw_location), color="red" if gene.weight > 0 else "blue", alpha = abs(gene.weight), zorder=1)
                 plt.gca().add_line(line)
         
         # Config
