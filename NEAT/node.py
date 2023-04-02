@@ -11,6 +11,7 @@ class Node(metaclass=MetaClass):
         self.label = label
         self.input_value = 0
         self.layer = layer
+        self.draw_location = None
         
     ### Return a copy
     def clone(self):
