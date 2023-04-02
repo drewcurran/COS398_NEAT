@@ -335,7 +335,7 @@ class Genome:
         # Draw genes
         for gene in self.genes:
             if gene.enabled:
-                line = plt.Line2D((gene.from_node.layer, gene.to_node.layer), (gene.from_node.draw_location, gene.to_node.draw_location), zorder=1)
+                line = plt.Line2D((gene.from_node.layer, gene.to_node.layer), (gene.from_node.draw_location, gene.to_node.draw_location), color="black", zorder=4)
                 plt.gca().add_line(line)
         
         # Config
