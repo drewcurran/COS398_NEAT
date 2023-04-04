@@ -113,7 +113,7 @@ class Genome:
         # Propagate through the network
         for gene in self.genes:
             gene.send_value()
-            print(gene.to_node.input_value)
+            print(gene.to_node.label, gene.to_node.input_value)
         
         out = []
 
@@ -278,7 +278,7 @@ class Genome:
 
                     # Inheritance from mate
                     if np.random.uniform() < 0.5:
-                        gene = mate_gene.clone()
+                        gene = mate_gene.clone(child.get_node(mate_gene.from_node.label), child.get_node(mate_gene.to_node.label))
 
                     gene.enabled = enabled
         
@@ -299,7 +299,7 @@ class Genome:
         # Copy the connections
         genes = []
         for gene in self.genes:
-            genes.append(gene.clone())
+            genes.append(gene.clone(clone.get_node(gene.from_node.label), clone.get_node(gene.to_node.label)))
         clone.genes = genes
 
         # Refresh
@@ -333,7 +333,7 @@ class Genome:
                 node.draw_location = (len(layer_nodes) - 1) / 2 - i
                 circle = plt.Circle((node.layer, node.draw_location), radius=0.1, label=node.label, color="black", zorder=2)
                 plt.gca().add_patch(circle)
-                ax.annotate(node.label, xy=(node.layer, node.draw_location), fontsize=12, ha="center", va="center", color="white", zorder=3)
+                plt.text(node.layer, node.draw_location, node.label, fontsize=12, ha="center", va="center", color="white", zorder=3)
 
         # Draw genes
         for gene in self.genes:
