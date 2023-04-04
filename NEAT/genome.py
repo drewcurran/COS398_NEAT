@@ -284,6 +284,30 @@ class Genome:
         
         return child
     
+    ### Get number of unmatching genes with another genome
+    def genome_difference(self, genome):
+        # Count matching genes
+        num_matching_genes = 0
+        weight_difference = 0
+        for gene1 in self.genes:
+            for gene2 in genome.genes:
+                if gene1.label == gene2.label:
+                    num_matching_genes += 1
+
+                    break
+
+        # Calculate excess and disjoint genes
+        num_unmatching_genes = self.representative_genome.num_genes + genome.num_genes - 2 * num_matching_genes
+        
+        # Calculate average weight difference
+        if self.num_genes == 0 or genome.num_genes == 0:
+            average_weight_difference = 0
+        else:
+            average_weight_difference = weight_difference / num_matching_genes
+
+        return num_unmatching_genes, average_weight_difference
+
+
     ### Return a copy
     def clone(self):
         clone = Genome(self.num_inputs, self.num_outputs, num_layers=self.num_layers)
