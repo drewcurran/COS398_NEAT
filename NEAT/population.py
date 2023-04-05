@@ -18,6 +18,8 @@ class Population:
         self.player_history = []
         self.innovation_history = []
         self.species = []
+        self.sum_average_fitness = 0
+        self.culled_population_size = 0
 
     ### Create new generation
     def new_generation(self):
@@ -26,14 +28,26 @@ class Population:
             players = [Player(self.num_inputs, self.num_outputs) for _ in range(self.population_size)]
             for player in players:
                 player.mutate(self.innovation_history)
-            self.speciate(players)
         # Progeny
         else:
             players = []
+
             for species in self.species:
+                # Number of children allocated to species
+                num_children = int(species.average_fitness / self.sum_average_fitness * self.population_size)
+
                 # Add representative player
                 players.append(species.representative_player.clone())
-        
+                num_children -= 1
+
+                # Add children
+                for _ in range(num_children):
+                    players.append(species.representative_player.clone())
+            
+            while len(players) < 1000:
+                players.append(self.species[0].representative_player.clone())
+
+        self.speciate(players)
         self.generation += 1
 
         return players
@@ -43,33 +57,29 @@ class Population:
         staleness_coefficient = 15
 
         # Sort each species with regard to fitness and cull
-        sum_average_fitness = 0
-        population_size = 0
         for species in self.species:
             species.sort()
             species.cull(0.5)
-            sum_average_fitness += species.average_fitness
-            population_size += len(species.players)
 
         # Sort species by best fitness
-        self.species.sort(key=lambda k: k.max_fitness)
+        self.species.sort(key=lambda k: k.max_fitness, reverse=True)
 
         # Kill unimproved species
-        if sum_average_fitness == 0:
-            return self.species
+        self.sum_average_fitness = 0
+        self.culled_population_size = 0
         for species in self.species:
             if species.staleness > staleness_coefficient and len(self.species) > 1:
                 self.species.remove(species)
-            elif species.average_fitness / sum_average_fitness * population_size < 1:
-                self.species.remove(species)
+            else:
+                self.sum_average_fitness += species.average_fitness
+                self.culled_population_size += len(species.players)
 
         return self.species
 
     ### Separate players into species
     def speciate(self, players):
         # Empty species lists
-        for species in self.species:
-            species.players = []
+        self.species = []
 
         # Determine species match
         for player in players:

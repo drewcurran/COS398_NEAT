@@ -19,15 +19,6 @@ class Species:
     ### Add player to species
     def add_player(self, player):
         self.players.append(player)
-
-        # Test if new player is max fitness
-        if player.fitness > self.max_fitness:
-            self.representative_player = player
-            self.max_fitness = player.fitness
-            self.staleness = 0
-
-        # Adjust average fitness
-        self.average_fitness = (self.average_fitness * (len(self.players) - 1) + player.fitness) / len(self.players)
         
         return player
     
@@ -55,6 +46,10 @@ class Species:
     def sort(self):
         self.players.sort(key=lambda k: k.fitness, reverse=True)
         
+        fittest_player = self.players[0]
+        self.representative_player = fittest_player
+        self.max_fitness = fittest_player.fitness
+        
         return self.players
 
     ### Cull the species
@@ -62,7 +57,7 @@ class Species:
         assert proportion >= 0 and proportion <= 1
 
         # Truncate species to proportion given
-        desired_size = int(np.floor(len(self.players) * proportion))
+        desired_size = int((len(self.players) * proportion))
         self.players = self.players[0:desired_size+1]
 
         self.staleness += 1
