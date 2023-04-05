@@ -9,7 +9,6 @@ Author: Drew Curran
 
 import numpy as np
 
-from player import Player
 from population import Population
 
 class Game:
@@ -20,22 +19,12 @@ class Game:
     def play_game(self):
         for species in self.population.species:
             for player in species.players:
+                won = 0
                 for _ in range(10):
-                    bias = [1]
-                    inputs = bias + np.random.randint(0, 1, size=2).tolist()
+                    inputs = [1] + np.random.randint(2, size=2).tolist()
                     decision = player.decide(inputs)
-                    if inputs[0] == inputs[1] and decision == 0:
-                        player.fitness += 1
-                    elif inputs[0] != inputs[1] and decision == 1:
-                        player.fitness += 1
-
-def main():
-    population = Population(1000, 2, 2)
-    game = Game(population)
-    game.play_game()
-    population.update_generation()
-    
-
-
-if __name__ == '__main__':
-    main()
+                    if inputs[1] == inputs[2] and decision == 0:
+                        won += 1
+                    elif inputs[1] != inputs[2] and decision == 1:
+                        won += 1
+                player.fitness = won

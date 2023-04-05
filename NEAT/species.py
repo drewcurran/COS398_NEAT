@@ -53,13 +53,13 @@ class Species:
 
     ### Sort the species according to fitness
     def sort(self):
-        self.players.sort(key=lambda k: k.fitness)
+        self.players.sort(key=lambda k: k.fitness, reverse=True)
         
         return self.players
 
     ### Cull the species
     def cull(self, proportion):
-        assert proportion >=0 and proportion <= 1
+        assert proportion >= 0 and proportion <= 1
 
         # Truncate species to proportion given
         desired_size = int(np.floor(len(self.players) * proportion))

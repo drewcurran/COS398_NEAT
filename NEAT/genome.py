@@ -108,7 +108,6 @@ class Genome:
         # Propagate through the network
         for gene in self.genes:
             gene.send_value()
-            print(gene.to_node.label, gene.to_node.input_value)
         
         out = []
 

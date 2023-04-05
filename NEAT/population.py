@@ -48,6 +48,8 @@ class Population:
         self.species.sort(key=lambda k: k.max_fitness)
 
         # Kill unimproved species
+        if sum_average_fitness == 0:
+            return self.species
         for species in self.species:
             if species.staleness > staleness_coefficient and len(self.species) > 1:
                 self.species.remove(species)
