@@ -272,9 +272,11 @@ class Genome:
 
                     # Inheritance from mate
                     if np.random.uniform() < 0.5:
-                        gene = mate_gene.clone(child.get_node(mate_gene.from_node.label), child.get_node(mate_gene.to_node.label))
-
-                    gene.enabled = enabled
+                        weight = gene.weight
+                    else:
+                        weight = mate_gene.weight
+                    
+                    gene.modify(weight, enabled)
         
         return child
     

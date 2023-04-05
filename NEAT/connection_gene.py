@@ -45,6 +45,11 @@ class ConnectionGene(metaclass=MetaClass):
     def clone(self, from_node, to_node):
         clone = ConnectionGene(from_node, to_node, self.weight, self.innovation_label, enabled=self.enabled)
         return clone
+    
+    ### Modify connection 
+    def modify(self, weight, enabled):
+        self.weight = weight
+        self.enabled = enabled
 
     ### To string
     def __str__(self):

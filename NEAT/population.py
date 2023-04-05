@@ -12,24 +12,31 @@ from species import Species
 class Population:
     def __init__(self, num_players, num_inputs, num_outputs):
         self.population_size = num_players
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
         self.generation = 0
         self.player_history = []
         self.innovation_history = []
-        players = [Player(num_inputs, num_outputs) for _ in range(num_players)]
-        for player in players:
-            player.mutate(self.innovation_history)
         self.species = []
-        self.speciate(players)
 
     ### Create new generation
     def new_generation(self):
-        children = []
+        # First generation
+        if self.generation == 0:
+            players = [Player(self.num_inputs, self.num_outputs) for _ in range(self.population_size)]
+            for player in players:
+                player.mutate(self.innovation_history)
+            self.speciate(players)
+        # Progeny
+        else:
+            players = []
+            for species in self.species:
+                # Add representative player
+                players.append(species.representative_player.clone())
         
-        for species in self.species:
-            # Add representative player
-            children.append(species.representative_player.clone())
+        self.generation += 1
 
-        return children
+        return players
 
     ### Enforce natural selection on the players that have played
     def update_generation(self):
