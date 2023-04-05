@@ -4,6 +4,8 @@ Description: Species of genomes within a population.
 Author: Drew Curran
 '''
 
+import numpy as np
+
 from player import Player
 
 class Species:
@@ -20,6 +22,7 @@ class Species:
 
         # Test if new player is max fitness
         if player.fitness > self.max_fitness:
+            self.representative_player = player
             self.max_fitness = player.fitness
             self.staleness = 0
 
@@ -36,10 +39,10 @@ class Species:
         incompatibility_threshold = 3
 
         # Get values related to differences in genomes
-        num_unmatching_genes, average_weight_difference = self.representative_genome.genome_difference(player.nn)
+        num_unmatching_genes, average_weight_difference = self.representative_player.nn.genome_difference(player.nn)
         
         # Get normalization for number of genes
-        normalizer = player.nn.num_genes - 20
+        normalizer = len(player.nn.genes) - 20
         if normalizer < 1:
             normalizer = 1
 
@@ -59,8 +62,9 @@ class Species:
         assert proportion >=0 and proportion <= 1
 
         # Truncate species to proportion given
-        desired_size = len(self.players) * proportion
-        self.players = self.players[:desired_size]
+        desired_size = int(np.floor(len(self.players) * proportion))
+        self.players = self.players[0:desired_size+1]
+
         self.staleness += 1
         self.average_fitness = 0
         for player in self.players:

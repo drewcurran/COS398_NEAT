@@ -33,6 +33,12 @@ class Player:
         self.fitness = evaluation_function(self)
 
         return self.fitness
+    
+    ### Mutate genome
+    def mutate(self, history):
+        self.nn.mutate_genome(history)
+
+        return self.nn
 
     ### Create child player with self and another player as parents
     def crossover(self, player):

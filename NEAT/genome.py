@@ -20,7 +20,6 @@ class Genome:
         self.nodes = {}
         self.num_nodes = 0
         self.genes = []
-        self.num_genes = 0
         
         # Add input nodes (including bias node)
         self.nodes[0] = []
@@ -74,7 +73,6 @@ class Genome:
         # Add connection to genome
         connection = ConnectionGene(from_node, to_node, weight, label)
         self.genes.append(connection)
-        self.num_genes += 1
         if not self.non_bias_connection and connection.from_node != self.bias_node:
             self.non_bias_connection = True
 
@@ -86,9 +84,6 @@ class Genome:
         self.num_nodes = 0
         for layer_nodes in self.nodes.values():
             self.num_nodes += len(layer_nodes)
-
-        # Number of connections
-        self.num_genes = len(self.genes)
 
         # Number of layers
         self.num_layers = len(self.nodes.keys())
@@ -291,17 +286,19 @@ class Genome:
         weight_difference = 0
         for gene1 in self.genes:
             for gene2 in genome.genes:
-                if gene1.label == gene2.label:
+                if gene1.innovation_label == gene2.innovation_label:
                     num_matching_genes += 1
                     weight_difference += abs(gene1.weight - gene2.weight)
                     break
 
         # Calculate excess and disjoint genes
-        num_unmatching_genes = self.representative_genome.num_genes + genome.num_genes - 2 * num_matching_genes
+        num_unmatching_genes = len(self.genes) + len(genome.genes) - 2 * num_matching_genes
         
         # Calculate average weight difference
-        if self.num_genes == 0 or genome.num_genes == 0:
+        if len(self.genes) == 0 or len(genome.genes) == 0:
             average_weight_difference = 0
+        elif num_matching_genes == 0:
+            average_weight_difference = float('inf')
         else:
             average_weight_difference = weight_difference / num_matching_genes
 
@@ -335,7 +332,7 @@ class Genome:
     def print_state(self, history = [], nodes = [], connections = []):
         print("\tState")
         print("\tNodes: %d (%d), %s" % (self.num_nodes, self.num_layers, self.nodes))
-        print("\tConnections: %d, %s" % (self.num_genes, self.genes))
+        print("\tConnections: %d, %s" % (len(self.genes), self.genes))
         if history:
             print("\tHistory: %s" % history)
         if nodes or connections:
