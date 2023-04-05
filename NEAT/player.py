@@ -16,7 +16,7 @@ class Player:
         self.fitness = 0
         self.lifespan = 0
         self.generation = 0
-    
+
     ### Make decision based on neural network
     def decide(self, inputs):
         # Sort decisions by output from neural network

@@ -10,16 +10,31 @@ class Species:
     def __init__(self, player):
         self.players = [player]
         self.representative_player = player
+        self.max_fitness = player.fitness
+        self.average_fitness = player.fitness
+        self.staleness = 0
     
     ### Add player to species
     def add_player(self, player):
         self.players.append(player)
+
+        # Test if new player is max fitness
+        if player.fitness > self.max_fitness:
+            self.max_fitness = player.fitness
+            self.staleness = 0
+
+        # Adjust average fitness
+        self.average_fitness = (self.average_fitness * (len(self.players) - 1) + player.fitness) / len(self.players)
         
         return player
     
-    ## TODO: use kwargs
     ### Test whether player is in species
-    def is_species(self, player, unmatching_coefficient, weight_coefficient, incompatibility_threshold):
+    def is_species(self, player):
+        # Get parameters
+        unmatching_coefficient = 1
+        weight_coefficient = 0.5
+        incompatibility_threshold = 3
+
         # Get values related to differences in genomes
         num_unmatching_genes, average_weight_difference = self.representative_genome.genome_difference(player.nn)
         
@@ -36,16 +51,20 @@ class Species:
     ### Sort the species according to fitness
     def sort(self):
         self.players.sort(key=lambda k: k.fitness)
+        
+        return self.players
 
     ### Cull the species
     def cull(self, proportion):
         assert proportion >=0 and proportion <= 1
 
-        # Sort species according to fitness
-        self.sort()
-
         # Truncate species to proportion given
         desired_size = len(self.players) * proportion
         self.players = self.players[:desired_size]
+        self.staleness += 1
+        self.average_fitness = 0
+        for player in self.players:
+            self.average_fitness += player.fitness
+        self.average_fitness /= len(self.players)
 
         return self.players

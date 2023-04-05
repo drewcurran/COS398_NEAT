@@ -293,7 +293,7 @@ class Genome:
             for gene2 in genome.genes:
                 if gene1.label == gene2.label:
                     num_matching_genes += 1
-
+                    weight_difference += abs(gene1.weight - gene2.weight)
                     break
 
         # Calculate excess and disjoint genes
