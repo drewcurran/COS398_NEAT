@@ -19,7 +19,7 @@ class Population:
         self.innovation_history = []
         self.species = []
         self.sum_average_fitness = 0
-        self.culled_population_size = 0
+        self.max_fitness = 0
 
     ### Create new generation
     def new_generation(self):
@@ -63,16 +63,15 @@ class Population:
 
         # Sort species by best fitness
         self.species.sort(key=lambda k: k.max_fitness, reverse=True)
+        self.max_fitness = self.species[0].players[0].fitness
 
         # Kill unimproved species
         self.sum_average_fitness = 0
-        self.culled_population_size = 0
         for species in self.species:
             if species.staleness > staleness_coefficient and len(self.species) > 1:
                 self.species.remove(species)
             else:
                 self.sum_average_fitness += species.average_fitness
-                self.culled_population_size += len(species.players)
 
         return self.species
 
