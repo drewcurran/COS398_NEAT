@@ -51,7 +51,6 @@ class Player:
     def clone(self):
         clone = Player(self.num_inputs, self.num_outputs)
         clone.nn = self.nn.clone()
-        clone.fitness = self.fitness
         clone.generation = self.generation
 
         return clone

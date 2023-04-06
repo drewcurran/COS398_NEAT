@@ -67,3 +67,46 @@ class Species:
         self.average_fitness /= len(self.players)
 
         return self.players
+    
+    ### Make a child player in the next generation
+    def make_child(self, history):
+        if np.random.uniform() < 0.25:
+            parent = self.select_player()
+            child = parent.clone()
+        else:
+            parent1 = self.select_player()
+            parent2 = self.select_player()
+            child = self.crossover(parent1, parent2)
+
+        child.mutate(history)
+
+        return child
+    
+    ### Crossover between two players in the species
+    def crossover(self, parent1, parent2):
+        # Fitter parent is the base
+        if parent1.fitness > parent2.fitness:
+            base = parent1
+            mate = parent2
+        else:
+            base = parent2
+            mate = parent1
+
+        # Clone from self
+        child = base.crossover(mate)
+        
+        return child
+    
+    ### Select player in species
+    def select_player(self):
+        fitness_sum = 0
+        for player in self.players:
+            fitness_sum += player.fitness
+
+        target_sum = np.random.uniform(fitness_sum)
+        for player in self.players:
+            target_sum -= player.fitness
+            if target_sum < 0:
+                return player
+                
+        return self.players[0]

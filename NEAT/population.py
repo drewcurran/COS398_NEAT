@@ -42,10 +42,10 @@ class Population:
 
                 # Add children
                 for _ in range(num_children):
-                    players.append(species.representative_player.clone())
+                    players.append(species.make_child(self.innovation_history))
             
             while len(players) < 1000:
-                players.append(self.species[0].representative_player.clone())
+                players.append(self.species[0].make_child(self.innovation_history))
 
         self.speciate(players)
         self.generation += 1
