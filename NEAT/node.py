@@ -4,9 +4,7 @@ Description: An instance of a node that connects to other nodes in the network.
 Author: Drew Curran
 '''
 
-from metaclass import MetaClass
-
-class Node(metaclass=MetaClass):
+class Node:
     def __init__(self, label, layer=0):
         self.label = label
         self.input_value = 0

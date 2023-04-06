@@ -6,11 +6,9 @@ Author: Drew Curran
 
 import numpy as np
 
-from node import Node
 from helper_functions import relu
-from metaclass import MetaClass
 
-class ConnectionGene(metaclass=MetaClass):
+class ConnectionGene:
     def __init__(self, from_node, to_node, weight, innovation_label, enabled=True):
       self.from_node = from_node
       self.to_node = to_node

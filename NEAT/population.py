@@ -4,8 +4,6 @@ Description: Population of players that changes with training.
 Author: Drew Curran
 '''
 
-import numpy as np
-
 from player import Player
 from species import Species
 

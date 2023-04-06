@@ -6,8 +6,6 @@ Author: Drew Curran
 
 import numpy as np
 
-from player import Player
-
 class Species:
     def __init__(self, player):
         self.players = [player]

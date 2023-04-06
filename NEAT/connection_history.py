@@ -4,10 +4,7 @@ Description: The connection history allows to test if a mutation is in the same 
 Author: Drew Curran
 '''
 
-from node import Node
-from metaclass import MetaClass
-
-class ConnectionHistory(metaclass=MetaClass):
+class ConnectionHistory:
     def __init__(self, from_node, to_node, innovation_label, gene_labels):
         self.from_node = from_node
         self.to_node = to_node
