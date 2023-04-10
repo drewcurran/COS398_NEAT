@@ -25,8 +25,8 @@ def play_game(players):
 
 def main():
     num_iters = 100
-    print_step = 5
-    population_size = 1000
+    print_step = 1
+    population_size = 10
     num_inputs = 2
     num_outputs = 2
     max_hits_threshold = 5
@@ -40,11 +40,12 @@ def main():
         for i in range(len(players)):
             players[i].fitness = won[i]
         population.update_generation()
-        if iteration % print_step == 0:
-            print("Iteration: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, len(population.innovation_history), len(population.species), population.sum_average_fitness / len(population.species), population.max_fitness))
-        elif population.max_fitness == 100:
+        if population.max_fitness == 100:
             print("Iteration: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, len(population.innovation_history), len(population.species), population.sum_average_fitness / len(population.species), population.max_fitness))
             max_hits += 1
+        elif iteration % print_step == 0:
+            print("Iteration: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, len(population.innovation_history), len(population.species), population.sum_average_fitness / len(population.species), population.max_fitness))
+            max_hits = 0
         else:
             max_hits = 0
         if max_hits == max_hits_threshold:

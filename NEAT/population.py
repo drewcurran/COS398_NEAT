@@ -42,7 +42,7 @@ class Population:
                 for _ in range(num_children):
                     players.append(species.make_child(self.innovation_history))
             
-            while len(players) < 1000:
+            while len(players) < self.population_size:
                 players.append(self.species[0].make_child(self.innovation_history))
 
         self.speciate(players)
