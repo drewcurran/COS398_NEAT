@@ -19,13 +19,17 @@ class Player:
 
     ### Make decision based on neural network
     def decide(self, inputs):
-        # Sort decisions by output from neural network
-        output = self.nn.forward_pass(inputs)
+        # Get output from neural network
+        output = self.output(inputs)
         
         # Choose output with the highest value
         decision = np.argmax(output)
 
         return decision
+    
+    ### Get output from neural network
+    def output(self, inputs):
+        return self.nn.forward_pass(inputs)
     
     ### Calculate fitness of the player
     def evaluate(self, evaluation_function):

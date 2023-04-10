@@ -1,39 +1,37 @@
-import random
+import numpy as np
 
-from catanatron.state_functions import (
-    player_key,
-)
 from catanatron.models.player import Player
-from catanatron.game import Game
-
+from catanatron_gym.envs.catanatron_env import ACTIONS_ARRAY
 
 class NEATPlayer(Player):
-    """
-    Should return one of the playable_actions.
+    def __init__(self, features, player, color, is_bot=True):
+        assert player.nn.num_inputs == len(features)
+        assert player.nn.num_outputs == len(ACTIONS_ARRAY)
 
-    Args:
-        game (Game): complete game state. read-only.
-        playable_actions (Iterable[Action]): options to choose from
-    Return:
-        action (Action): Chosen element of playable_actions
-    """
+        self.features = features
+        self.all_actions = ACTIONS_ARRAY
+        self.player = player
+        self.color = color
+        self.is_bot = is_bot
 
-    def decide(self, game: Game, playable_actions):
-        if len(playable_actions) == 1:
-            return playable_actions[0]
+    ### Get the features of the current game state
+    def get_feature_values(self, game):
+        pass
+    
+    ### Decide action based on the game state
+    def decide(self, game, playable_actions):
+        # Get the features of the current game state
+        input = self.get_feature_values(game)
 
-        best_value = float("-inf")
-        best_actions = []
-        for action in playable_actions:
-            game_copy = game.copy()
-            game_copy.execute(action)
+        # Get output from the neural network
+        output = self.player.output(input)
 
-            key = player_key(game_copy.state, self.color)
-            value = game_copy.state.player_state[f"{key}_ACTUAL_VICTORY_POINTS"]
-            if value == best_value:
-                best_actions.append(action)
-            if value > best_value:
-                best_value = value
-                best_actions = [action]
+        # Apply mask to output
+        for i in range(len(ACTIONS_ARRAY)):
+            if not ACTIONS_ARRAY[i] in playable_actions:
+                output[i] = 0
+        
+        # Choose output with the highest value
+        decision = np.argmax(output)
 
-        return random.choice(best_actions)
+        return ACTIONS_ARRAY[decision]
