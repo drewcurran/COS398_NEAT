@@ -1,13 +1,13 @@
 '''
-game.py
-Description: Application and training for the NEAT algorithm.
+train.py
+Description: Sample application and training for the NEAT algorithm.
 Author: Drew Curran
 '''
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-from population import Population
+from NEAT.population import Population
 
 ### Play a game
 def play_game(players):

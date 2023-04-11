@@ -7,10 +7,10 @@ Author: Drew Curran
 import numpy as np
 from matplotlib import pyplot as plt
 
-from node import Node
-from connection_gene import ConnectionGene
-from connection_history import ConnectionHistory
-from helper_functions import sigmoid
+from NEAT.node import Node
+from NEAT.connection_gene import ConnectionGene
+from NEAT.connection_history import ConnectionHistory
+from NEAT.helper_functions import sigmoid
 
 class Genome:
     def __init__(self, num_inputs, num_outputs, num_layers = 2):

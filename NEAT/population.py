@@ -4,8 +4,8 @@ Description: Population of players that changes with training.
 Author: Drew Curran
 '''
 
-from player import Player
-from species import Species
+from NEAT.player import Player
+from NEAT.species import Species
 
 class Population:
     def __init__(self, num_players, num_inputs, num_outputs):

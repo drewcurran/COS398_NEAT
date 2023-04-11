@@ -6,7 +6,7 @@ Author: Drew Curran
 
 import numpy as np
 
-from helper_functions import relu
+from NEAT.helper_functions import relu
 
 class ConnectionGene:
     def __init__(self, from_node, to_node, weight, innovation_label, enabled=True):

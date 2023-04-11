@@ -6,7 +6,7 @@ Author: Drew Curran
 
 import numpy as np
 
-from genome import Genome
+from NEAT.genome import Genome
 
 class Player:
     def __init__(self, num_inputs, num_outputs):
