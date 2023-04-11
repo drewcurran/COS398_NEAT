@@ -4,6 +4,9 @@ Description: Application of the NEAT algorithm to Settlers of Catan.
 Author: Drew Curran
 '''
 
+import sys
+sys.path.append('..')
+
 from matplotlib import pyplot as plt
 
 from catanatron import Game, RandomPlayer, Color
