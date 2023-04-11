@@ -21,13 +21,13 @@ def main():
     print_step = 1
     population_size = 10
 
+    num_inputs = 20
+
     population = Population(population_size, num_inputs, len(ACTIONS_ARRAY))
 
     for iteration in range(num_iters):
         players = population.new_generation()
-        won = play_game(players)
-        for i in range(len(players)):
-            players[i].fitness = won[i]
+        
         population.update_generation()
 
         if iteration % print_step == 0:
