@@ -6,7 +6,7 @@ from catanatron_gym.features import iter_players
 from catanatron.state_functions import player_key
 
 class NEATPlayer(Player):
-    def __init__(self, features, player, color, is_bot=True):
+    def __init__(self, color, player, features, is_bot=True):
         assert player.nn.num_inputs == len(features)
         assert player.nn.num_outputs == len(ACTIONS_ARRAY)
 
@@ -19,30 +19,33 @@ class NEATPlayer(Player):
     ### Decide action based on the game state
     def decide(self, game, playable_actions):
         # Get the features of the current game state
-        input = self.get_feature_values(game)
+        inputs = self.get_feature_values(game)
+        print(len(inputs))
 
         # Get output from the neural network
-        output = self.player.output(input)
+        outputs = self.player.output(inputs)
 
         # Apply mask to output
         for i in range(len(ACTIONS_ARRAY)):
             if not ACTIONS_ARRAY[i] in playable_actions:
-                output[i] = 0
+                outputs[i] = 0
         
         # Choose output with the highest value
-        decision = np.argmax(output)
+        decision = np.argmax(outputs)
+        action = ACTIONS_ARRAY[decision]
+        print(action)
+        print(playable_actions[0])
 
-        return ACTIONS_ARRAY[decision]
+        return action
     
         ### Get the features of the current game state
     def get_feature_values(self, game):
         features = {}
         pkey = player_key(game.state, self.color)
         
-
         # Feature for each resource amount in hand
         for resource in RESOURCES:
-            features[f"PLAYER_{resource}_IN_HAND"] = game.state.player_state[key + f"_{resource}_IN_HAND"]
+            features[f"PLAYER_{resource}_IN_HAND"] = game.state.player_state[pkey + f"_{resource}_IN_HAND"]
 
         # Feature for longest road and max longest road
         max_longest = 0
@@ -65,3 +68,5 @@ class NEATPlayer(Player):
           elif longest > max_longest:
               max_longest = longest
         features["MAX_LONGEST_ROAD_DIFFERENCE"] = max_longest
+
+        return [1] + [0] * 20
