@@ -1,16 +1,22 @@
+'''
+catan_players.py
+Description: Application of the NEAT algorithm to Settlers of Catan.
+Author: Drew Curran
+'''
+
 import numpy as np
 
 from catanatron.models.player import Player
 from catanatron.models.enums import Action, ActionType
-from catanatron_gym.envs.catanatron_env import ACTIONS_ARRAY, RESOURCES
-from catanatron_gym.features import iter_players
-from catanatron.state_functions import player_key
+from catanatron_gym.envs.catanatron_env import ACTIONS_ARRAY
+
+from Catan.catan_features import CatanFeatures
 
 class NEATPlayer(Player):
-    def __init__(self, color, player, features, is_bot=True):
+    def __init__(self, color, player, is_bot=True):
         self.color = color
         self.player = player
-        self.features = features
+        self.features = CatanFeatures(color)
         self.actions = []
         self.robber_actions = {}
         for action in ACTIONS_ARRAY:
@@ -19,9 +25,6 @@ class NEATPlayer(Player):
             else:
                 self.robber_actions[action[1]] = []
         self.is_bot = is_bot
-
-        assert player.nn.num_inputs == len(features)
-        assert player.nn.num_outputs == len(self.actions) + len(self.robber_actions)
     
     ### Decide action based on the game state
     def decide(self, game, playable_actions):
@@ -37,15 +40,14 @@ class NEATPlayer(Player):
         
         # Find all the possible robber moves if applicable
         if robber_moves_only:
+            for tile in self.robber_actions:
+                self.robber_actions[tile].clear()
             for action in playable_actions:
                 tile = action[2][0]
-                if action not in self.robber_actions[tile]:
-                    if len(self.robber_actions[tile]) == 1 and self.robber_actions[tile][0][2][1] is None:
-                        self.robber_actions[tile] = []
-                    self.robber_actions[tile].append(action)
+                self.robber_actions[tile].append(action)
 
         # Get the features of the current game state
-        inputs = self.get_feature_values(game)
+        inputs = self.features.get_feature_values(game)
 
         # Get output from the neural network
         outputs = self.player.output(inputs)
@@ -71,26 +73,3 @@ class NEATPlayer(Player):
         
         print("Decision: %.3d, Confidence: %.4f, Action: %s" % (decision, np.max(outputs), action))
         return action
-    
-    ### Get the features of the current game state
-    def get_feature_values(self, game):
-        features = {}
-        pkey = player_key(game.state, self.color)
-        
-        # Number of victory points for each player
-
-        # Each resource amount in hand
-        for resource in RESOURCES:
-            features[f"PLAYER_{resource}_IN_HAND"] = game.state.player_state[pkey + f"_{resource}_IN_HAND"]
-
-        # Total resource amount in hand
-
-        # Development cards in hand
-
-        # Development cards played
-
-        # Tile production values
-
-        
-
-        return [1] + [0] * 20

@@ -95,7 +95,7 @@ class Genome:
     ### Forward pass
     def forward_pass(self, input_values):
         # Input values must be same size and inputs and have bias value 1
-        assert len(self.nodes[0]) == len(input_values)
+        assert len(self.nodes[0]) == len(input_values), "NN Inputs: %d, Values Given: %d" % (len(self.nodes[0]), len(input_values))
         assert input_values[0] == 1
 
         # Give values to the nodes in the input layer
