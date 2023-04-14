@@ -77,32 +77,20 @@ class NEATPlayer(Player):
         features = {}
         pkey = player_key(game.state, self.color)
         
-        # Feature for each resource amount in hand
+        # Number of victory points for each player
+
+        # Each resource amount in hand
         for resource in RESOURCES:
             features[f"PLAYER_{resource}_IN_HAND"] = game.state.player_state[pkey + f"_{resource}_IN_HAND"]
 
-        # Feature for longest road and max longest road
-        max_longest = 0
-        for i, color in iter_players(game.state.colors, self.color):
-          key = player_key(game.state, color)
-          longest = game.state.player_state[key + "_LONGEST_ROAD_LENGTH"]
-          if color == self.color:
-              features["PLAYER_LONGEST_ROAD"] = longest
-          elif longest > max_longest:
-              max_longest = longest
-        features["MAX_LONGEST_ROAD"] = max_longest
+        # Total resource amount in hand
 
-        # Feature for army and max army
-        max_army = 0
-        for i, color in iter_players(game.state.colors, self.color):
-          key = player_key(game.state, color)
-          army = game.state.player_state[key + "_LONGEST_ROAD_LENGTH"]
-          if color == self.color:
-              features["PLAYER_LONGEST_ROAD_DIFFERENCE"] = longest
-          elif longest > max_longest:
-              max_longest = longest
-        features["MAX_LONGEST_ROAD_DIFFERENCE"] = max_army
+        # Development cards in hand
 
-        # Feature for highest producing tile for each player
+        # Development cards played
+
+        # Tile production values
+
+        
 
         return [1] + [0] * 20
