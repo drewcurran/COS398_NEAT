@@ -1,6 +1,6 @@
 '''
 catan_players.py
-Description: Application of the NEAT algorithm to Settlers of Catan.
+Description: Defining a player using the NEAT neural network.
 Author: Drew Curran
 '''
 
@@ -13,9 +13,9 @@ from catanatron_gym.envs.catanatron_env import ACTIONS_ARRAY
 from Catan.catan_features import CatanFeatures
 
 class NEATPlayer(Player):
-    def __init__(self, color, player, is_bot=True):
+    def __init__(self, color, is_bot=True):
         self.color = color
-        self.player = player
+        self.agent = None
         self.features = CatanFeatures(color)
         self.actions = []
         self.robber_actions = {}
@@ -50,7 +50,7 @@ class NEATPlayer(Player):
         inputs = self.features.get_feature_values(game)
 
         # Get output from the neural network
-        outputs = self.player.output(inputs)
+        outputs = self.agent.output(inputs)
         
         # Apply mask to output
         robber_actions = list(self.robber_actions.values())
@@ -71,5 +71,4 @@ class NEATPlayer(Player):
             possible_actions = list(self.robber_actions.values())[decision - len(self.actions)]
             action = possible_actions[np.random.randint(len(possible_actions))]
         
-        print("Decision: %.3d, Confidence: %.4f, Action: %s" % (decision, np.max(outputs), action))
         return action
