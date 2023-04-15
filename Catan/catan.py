@@ -45,8 +45,11 @@ def train(num_iters, population_size, games_per_player, new, quiet):
         num_species = []
         avg_fitness = []
         max_fitness = []
+        config = (population_size, games_per_player)
     else:
         try:
+            with open('config.pickle', 'rb') as handle:
+                config = pickle.load(handle)
             with open('population.pickle', 'rb') as handle:
                 population = pickle.load(handle)
             with open('agent_wins.pickle', 'rb') as handle:
@@ -70,7 +73,7 @@ def train(num_iters, population_size, games_per_player, new, quiet):
     while i < num_total_iters:
         players = population.new_generation()
 
-        wins, vps_by_player, games = play_batch(games_per_player, game_agents, population_players=players, quiet=quiet)
+        wins, _, _ = play_batch(games_per_player, game_agents, population_players=players, quiet=quiet)
 
         population.update_generation()
 
@@ -81,12 +84,14 @@ def train(num_iters, population_size, games_per_player, new, quiet):
             avg_fitness.append(population.sum_average_fitness / len(population.species))
             max_fitness.append(population.max_fitness)
         except:
-            break
+            continue
 
         print_stats(i + 1, agent_wins[i], num_innovations[i], num_species[i], avg_fitness[i], max_fitness[i])
 
         i += 1
     
+    with open('config.pickle', 'wb') as handle:
+        pickle.dump(config, handle, protocol=pickle.HIGHEST_PROTOCOL)
     with open('population.pickle', 'wb') as handle:
         pickle.dump(population, handle, protocol=pickle.HIGHEST_PROTOCOL)
     with open('agent_wins.pickle', 'wb') as handle:
@@ -100,8 +105,6 @@ def train(num_iters, population_size, games_per_player, new, quiet):
     with open('max_fitness.pickle', 'wb') as handle:
         pickle.dump(max_fitness, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    return num_total_iters, population, agent_wins, num_innovations, num_species, avg_fitness, max_fitness
-
 def main():
     args = parse_args()
     num_iters = args.num_iters
@@ -110,13 +113,7 @@ def main():
     new = args.new
     quiet = args.quiet
 
-    num_total_iters, population, agent_wins, num_innovations, num_species, avg_fitness, max_fitness = train(num_iters, population_size, games_per_player, new, quiet)
-
-    plt.plot(range(1, num_total_iters + 1), agent_wins, color='Orange')
-    plt.ylim([0, population_size * games_per_player])
-    plt.xticks(list(range(25, num_total_iters, 25)) + [num_total_iters])
-    plt.yticks(list(range(0, population_size * games_per_player, population_size)) + [population_size * games_per_player])
-    plt.show()
+    train(num_iters, population_size, games_per_player, new, quiet)
     
 if __name__ == '__main__':
     main()
