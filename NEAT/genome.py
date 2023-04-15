@@ -345,7 +345,7 @@ class Genome:
         print("\n")
 
     ### Draw the state of the genome
-    def draw_state(self):
+    def draw_state(self, numbers=True):
         _, ax = plt.subplots()
 
         # Draw nodes
@@ -355,7 +355,8 @@ class Genome:
                 node.draw_location = (len(layer_nodes) - 1) / 2 - i
                 circle = plt.Circle((node.layer, node.draw_location), radius=0.1, label=node.label, color="black", zorder=2)
                 plt.gca().add_patch(circle)
-                plt.text(node.layer, node.draw_location, node.label, fontsize=12, ha="center", va="center", color="white", zorder=3)
+                if numbers:
+                    plt.text(node.layer, node.draw_location, node.label, fontsize=12, ha="center", va="center", color="white", zorder=3)
 
         # Draw genes
         for gene in self.genes:
