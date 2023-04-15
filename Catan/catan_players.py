@@ -64,7 +64,7 @@ class NEATPlayer(Player):
                     outputs[i] = 0
         
         # Choose output with the highest value
-        decision = np.argmax(outputs)
+        decision = np.random.choice(np.flatnonzero(outputs == np.max(outputs)))
         if decision < len(self.actions):
             action = self.actions[decision]
         else:

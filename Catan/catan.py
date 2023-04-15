@@ -71,6 +71,9 @@ def train(num_iters, population_size, games_per_player, new, quiet):
         players = population.new_generation()
 
         wins, vps_by_player, games = play_batch(games_per_player, game_agents, population_players=players, quiet=quiet)
+
+        population.update_generation()
+
         try:
             agent_wins.append(wins[agent.color])
             num_innovations.append(len(population.innovation_history))
@@ -79,8 +82,6 @@ def train(num_iters, population_size, games_per_player, new, quiet):
             max_fitness.append(population.max_fitness)
         except:
             break
-
-        population.update_generation()
 
         print_stats(i + 1, agent_wins[i], num_innovations[i], num_species[i], avg_fitness[i], max_fitness[i])
 
