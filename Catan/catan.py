@@ -12,7 +12,7 @@ import pickle
 import argparse
 
 from catanatron import Game, RandomPlayer, Color
-from catanatron_gym.envs.catanatron_env import ACTIONS_ARRAY
+from catanatron_gym.envs.catanatron_env import ACTION_TYPES
 
 from NEAT.population import Population
 from Catan.catan_players import NEATPlayer
@@ -36,7 +36,7 @@ def train(num_iters, population_size, games_per_player, new, quiet):
     agent = game_agents[0]
 
     num_features = len(agent.features.get_feature_values(Game(game_agents))) - 1
-    num_actions = len(ACTIONS_ARRAY)
+    num_actions = len(ACTION_TYPES)
 
     if new:
         population = Population(population_size, num_features, num_actions)
