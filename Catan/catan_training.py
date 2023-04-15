@@ -23,6 +23,7 @@ from catanatron.game import Game
 from catanatron.models.player import Color
 from catanatron.models.map import build_map
 from catanatron.state_functions import get_actual_victory_points
+from catanatron.state_functions import player_key
 
 from Catan.catan_players import NEATPlayer
 
@@ -240,9 +241,13 @@ def play_batch_core(num_games, players, game_config, accumulators=[], population
                 accumulator.before_all()
         if population_players is not None:
             for pop_player in population_players:
+                pop_player.fitness = 0
+
                 for player in players:
                     if type(player) == NEATPlayer:
-                        player.agent = pop_player
+                        neat_player = player
+                        neat_player.agent = pop_player
+
                 for _ in range(num_games):
                     for player in players:
                         player.reset_state()
@@ -254,6 +259,8 @@ def play_batch_core(num_games, players, game_config, accumulators=[], population
                         catan_map=catan_map,
                     )
                     game.play(accumulators)
+                    key = player_key(game.state, neat_player.color)
+                    pop_player.fitness += game.state.player_state[key + "_ACTUAL_VICTORY_POINTS"]
                     yield game
         else:
             for _ in range(num_games):
