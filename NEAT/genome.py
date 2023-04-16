@@ -219,6 +219,12 @@ class Genome:
         # List of connections made
         connections = []
 
+        # Mutate node
+        if np.random.uniform() < 0.05:
+            node, node_connections = self.mutate_node(history)
+            nodes.append(node)
+            connections.append(node_connections)
+        
         # Mutate connection
         if np.random.uniform() < 0.1 or len(self.genes) == 0:
             connection = self.mutate_connection(history)
@@ -229,12 +235,6 @@ class Genome:
             for gene in self.genes:
                 gene.mutate_weight()
         
-        # Mutate node
-        if np.random.uniform() < 0.05:
-            node, node_connections = self.mutate_node(history)
-            nodes.append(node)
-            connections.append(node_connections)
-
         return nodes, connections
 
     ### Determine if two nodes are connected
