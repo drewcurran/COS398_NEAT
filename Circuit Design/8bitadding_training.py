@@ -1,21 +1,31 @@
 '''
-train.py
-Description: Sample application and training for the NEAT algorithm.
+8bitadding_training.py
+Description: Adding application and training for the NEAT algorithm.
 Author: Drew Curran
 '''
+
+import sys
+sys.path.append('C:\\Users\\drewc\\Documents\\GitHub\\COS398_CatanAI\\')
 
 import numpy as np
 from matplotlib import pyplot as plt
 
 from NEAT.population import Population
 
-### Play a game
+### Print the stats of an iteration
+def print_stats(iteration, num_wins, num_innovations, num_species, avg_fitness, max_fitness):
+    print("Iteration: %d, Wins: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, num_wins, num_innovations, num_species, avg_fitness, max_fitness))
+
+### Play the specified game
 def play_game(players):
     won = []
     for player in players:
         won.append(0)
         for _ in range(100):
-            inputs = [1] + np.random.randint(2, size=2).tolist()
+            bias = [1]
+            input1 = np.random.randint(2, size=8)
+            input2 = np.random.randint(2, size=8)
+            inputs = bias + input1.tolist() + input2.tolist()
             decision = player.decide(inputs)
             if inputs[1] == inputs[2] and decision == 0:
                 won[len(won) - 1] += 1
@@ -26,7 +36,7 @@ def play_game(players):
 def main():
     num_iters = 100
     print_step = 1
-    population_size = 10
+    population_size = 1000
     num_inputs = 2
     num_outputs = 2
     max_hits_threshold = 5
@@ -49,9 +59,9 @@ def main():
         else:
             max_hits = 0
         if max_hits == max_hits_threshold:
-            max_player = population.species[0].players[0]
             break
     
+    max_player = population.species[0].players[0]
     for i in range(4):
         inputs = [1, 0 if i < 2 else 1, 0 if i % 2 == 0 else 1]
         decision = max_player.decide(inputs)

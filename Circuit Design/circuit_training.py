@@ -1,50 +1,57 @@
 '''
-catan.py
-Description: Application of the NEAT algorithm to Settlers of Catan.
+circuit_training.py
+Description: Circuit design application and training for the NEAT algorithm.
 Author: Drew Curran
 '''
 
 import sys
 sys.path.append('C:\\Users\\drewc\\Documents\\GitHub\\COS398_CatanAI\\')
 
-import pickle
+import numpy as np
+from matplotlib import pyplot as plt
 import argparse
-
-from catanatron import Game, RandomPlayer, Color
-from catanatron_gym.envs.catanatron_env import ACTION_TYPES
+import pickle
 
 from NEAT.population import Population
-from Catan.catan_players import NEATPlayer
-from Catan.catan_training import play_batch
 
+### Parse the command line arguments
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--num-iters', help='number of iterations', required=True, type=int)
+    parser.add_argument('-g', '--game', help='type of circuit to train', required=True, type=int)
     parser.add_argument('-p', '--population-size', help='number of players in population', required=True, type=int)
     parser.add_argument('-g', '--games', help='games per player in population', required=True, type=int)
     parser.add_argument('-n', '--new', help='create new population', action='store_true')
-    parser.add_argument('-q', '--quiet', help='hide round progress', action='store_true')
     args = parser.parse_args()
     return args
 
+### Print the stats of an iteration
 def print_stats(iteration, num_wins, num_innovations, num_species, avg_fitness, max_fitness):
     print("Iteration: %d, Wins: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, num_wins, num_innovations, num_species, avg_fitness, max_fitness))
 
-def train(num_iters, population_size, games_per_player, new, quiet):
-    game_agents = [NEATPlayer(Color.ORANGE), RandomPlayer(Color.RED), RandomPlayer(Color.BLUE), RandomPlayer(Color.WHITE)]
-    agent = game_agents[0]
+### Play the specified game
+def play_game(players, games_per_player):
+    won = []
+    for player in players:
+        won.append(0)
+        for _ in range(games_per_player):
+            inputs = [1] + np.random.randint(2, size=2).tolist()
+            decision = player.decide(inputs)
+            if inputs[1] == inputs[2] and decision == 0:
+                won[len(won) - 1] += 1
+            elif inputs[1] != inputs[2] and decision == 1:
+                won[len(won) - 1] += 1
+    return won
 
-    num_features = len(agent.features.get_feature_values(Game(game_agents))) - 1
-    num_actions = len(ACTION_TYPES)
-
+### Train the neural network
+def train(game, num_iters, population_size, games_per_player, new):
     if new:
-        population = Population(population_size, num_features, num_actions)
+        config = (population_size, games_per_player)
+        population = Population(population_size, game.num_inputs, game.num_outputs)
         agent_wins = []
         num_innovations = []
         num_species = []
         avg_fitness = []
         max_fitness = []
-        config = (population_size, games_per_player)
     else:
         try:
             with open('config.pickle', 'rb') as handle:
@@ -95,22 +102,14 @@ def train(num_iters, population_size, games_per_player, new, quiet):
                 print("Failed to save.")
 
         # Play games
-        wins, _, _ = play_batch(games_per_player, game_agents, population_players=players, quiet=quiet)
-
-        # Normalize fitness
-        max_player_fitness = max(player.fitness for player in players)
-        min_player_fitness = min(player.fitness for player in players)
-        if max_player_fitness == min_player_fitness:
-            min_player_fitness = 0
-        for player in players:
-            player.fitness = (player.fitness - min_player_fitness) / (max_player_fitness - min_player_fitness)
+        wins, _, _ = play_game(players, games_per_player)
 
         # Enforce natural selection
         population.update_generation()
         
         # Get the stats from the training iteration
         try:
-            agent_wins.append(wins[agent.color])
+            agent_wins.append(wins)
             num_innovations.append(len(population.innovation_history))
             num_species.append(len(population.species))
             avg_fitness.append(population.sum_average_fitness / len(population.species))
@@ -127,9 +126,49 @@ def main():
     population_size = args.population_size
     games_per_player = args.games
     new = args.new
-    quiet = args.quiet
 
-    train(num_iters, population_size, games_per_player, new, quiet)
+    train(num_iters, population_size, games_per_player, new)
     
+if __name__ == '__main__':
+    main()
+
+
+def main():
+    num_iters = 100
+    print_step = 1
+    population_size = 1000
+    num_inputs = 2
+    num_outputs = 2
+    max_hits_threshold = 5
+
+    population = Population(population_size, num_inputs, num_outputs)
+    max_hits = 0
+
+    for iteration in range(num_iters):
+        players = population.new_generation()
+        won = play_game(players)
+        for i in range(len(players)):
+            players[i].fitness = won[i]
+        population.update_generation()
+        if population.max_fitness == 100:
+            print("Iteration: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, len(population.innovation_history), len(population.species), population.sum_average_fitness / len(population.species), population.max_fitness))
+            max_hits += 1
+        elif iteration % print_step == 0:
+            print("Iteration: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, len(population.innovation_history), len(population.species), population.sum_average_fitness / len(population.species), population.max_fitness))
+            max_hits = 0
+        else:
+            max_hits = 0
+        if max_hits == max_hits_threshold:
+            break
+    
+    max_player = population.species[0].players[0]
+    for i in range(4):
+        inputs = [1, 0 if i < 2 else 1, 0 if i % 2 == 0 else 1]
+        decision = max_player.decide(inputs)
+        print(inputs, max_player.nn.forward_pass(inputs), decision)
+    max_player.nn.print_state()
+    max_player.nn.draw_state()
+    plt.show()
+
 if __name__ == '__main__':
     main()
