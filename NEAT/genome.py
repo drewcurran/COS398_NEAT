@@ -220,7 +220,7 @@ class Genome:
         connections = []
 
         # Mutate connection
-        if np.random.uniform() < 0.05 or len(self.genes) == 0:
+        if np.random.uniform() < 0.1 or len(self.genes) == 0:
             connection = self.mutate_connection(history)
             connections.append(connection)
         
@@ -230,7 +230,7 @@ class Genome:
                 gene.mutate_weight()
         
         # Mutate node
-        if np.random.uniform() < 0.01:
+        if np.random.uniform() < 0.05:
             node, node_connections = self.mutate_node(history)
             nodes.append(node)
             connections.append(node_connections)

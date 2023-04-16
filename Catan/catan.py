@@ -73,6 +73,26 @@ def train(num_iters, population_size, games_per_player, new, quiet):
     while i < num_total_iters:
         players = population.new_generation()
 
+        if i % 10 == 0:
+            try:
+                with open('config.pickle', 'wb') as handle:
+                    pickle.dump(config, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                with open('population.pickle', 'wb') as handle:
+                    pickle.dump(population, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                with open('agent_wins.pickle', 'wb') as handle:
+                    pickle.dump(agent_wins, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                with open('num_innovations.pickle', 'wb') as handle:
+                    pickle.dump(num_innovations, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                with open('num_species.pickle', 'wb') as handle:
+                    pickle.dump(num_species, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                with open('avg_fitness.pickle', 'wb') as handle:
+                    pickle.dump(avg_fitness, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                with open('max_fitness.pickle', 'wb') as handle:
+                    pickle.dump(max_fitness, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                print("Progress saved.")
+            except:
+                print("Failed to save.")
+
         wins, _, _ = play_batch(games_per_player, game_agents, population_players=players, quiet=quiet)
 
         population.update_generation()
@@ -89,21 +109,6 @@ def train(num_iters, population_size, games_per_player, new, quiet):
         print_stats(i + 1, agent_wins[i], num_innovations[i], num_species[i], avg_fitness[i], max_fitness[i])
 
         i += 1
-    
-    with open('config.pickle', 'wb') as handle:
-        pickle.dump(config, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('population.pickle', 'wb') as handle:
-        pickle.dump(population, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('agent_wins.pickle', 'wb') as handle:
-        pickle.dump(agent_wins, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('num_innovations.pickle', 'wb') as handle:
-        pickle.dump(num_innovations, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('num_species.pickle', 'wb') as handle:
-        pickle.dump(num_species, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('avg_fitness.pickle', 'wb') as handle:
-        pickle.dump(avg_fitness, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('max_fitness.pickle', 'wb') as handle:
-        pickle.dump(max_fitness, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 def main():
     args = parse_args()
