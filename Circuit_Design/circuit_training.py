@@ -129,6 +129,8 @@ def train(game_label, num_iters, population_size, games_per_player, new):
             
         i += 1
 
+    save(game_label, config, population, agent_wins, num_innovations, num_species, avg_fitness, max_fitness)
+
 def main():
     args = parse_args()
     game = args.game_type
