@@ -53,4 +53,8 @@ class NEATPlayer(Player):
             else:
                 decision = self.actions[action_type][np.random.choice(len(self.actions[action_type]))]
         
+        # Failsafe
+        if decision is None:
+            decision = playable_actions[0]
+        
         return decision

@@ -7,7 +7,6 @@ Author: Drew Curran
 import sys
 sys.path.append('C:\\Users\\drewc\\Documents\\GitHub\\COS398_CatanAI\\')
 
-from matplotlib import pyplot as plt
 import pickle
 import argparse
 
@@ -71,9 +70,11 @@ def train(num_iters, population_size, games_per_player, new, quiet):
     i = len(agent_wins)
     num_total_iters = i + num_iters
     while i < num_total_iters:
+        # Generate new players
         players = population.new_generation()
 
-        if i % 10 == 0:
+        # Save progress
+        if i % 5 == 0:
             try:
                 with open('config.pickle', 'wb') as handle:
                     pickle.dump(config, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -93,10 +94,21 @@ def train(num_iters, population_size, games_per_player, new, quiet):
             except:
                 print("Failed to save.")
 
+        # Play games
         wins, _, _ = play_batch(games_per_player, game_agents, population_players=players, quiet=quiet)
 
-        population.update_generation()
+        # Normalize fitness
+        max_player_fitness = max(player.fitness for player in players)
+        min_player_fitness = min(player.fitness for player in players)
+        if max_player_fitness == min_player_fitness:
+            min_player_fitness = 0
+        for player in players:
+            player.fitness = (player.fitness - min_player_fitness) / (max_player_fitness - min_player_fitness)
 
+        # Enforce natural selection
+        population.update_generation()
+        
+        # Get the stats from the training iteration
         try:
             agent_wins.append(wins[agent.color])
             num_innovations.append(len(population.innovation_history))
@@ -105,7 +117,6 @@ def train(num_iters, population_size, games_per_player, new, quiet):
             max_fitness.append(population.max_fitness)
         except:
             continue
-
         print_stats(i + 1, agent_wins[i], num_innovations[i], num_species[i], avg_fitness[i], max_fitness[i])
 
         i += 1

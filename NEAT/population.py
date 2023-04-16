@@ -44,6 +44,8 @@ class Population:
             
             while len(players) < self.population_size:
                 players.append(self.species[0].make_child(self.innovation_history))
+            while len(players) > self.population_size:
+                players.pop()
 
         self.speciate(players)
         self.generation += 1
@@ -70,6 +72,13 @@ class Population:
                 self.species.remove(species)
             else:
                 self.sum_average_fitness += species.average_fitness
+        
+        # Kill bottom species
+        num_players = 0
+        for species in self.species:
+            num_players += len(species.players)
+            if num_players > self.population_size * 0.8:
+                self.species.remove(species)
 
         return self.species
 

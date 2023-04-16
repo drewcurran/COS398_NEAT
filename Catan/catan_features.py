@@ -5,9 +5,8 @@ Author: Drew Curran
 '''
 
 from catanatron_gym.features import iter_players
-from catanatron.state_functions import player_key, player_num_dev_cards, player_num_resource_cards
-from catanatron.models.map import number_probability
-from catanatron.models.enums import RESOURCES, DEVELOPMENT_CARDS, VICTORY_POINT
+from catanatron.state_functions import player_key
+from catanatron.models.enums import RESOURCES
 
 class CatanFeatures():
     def __init__(self, color):
