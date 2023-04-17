@@ -50,19 +50,19 @@ def train(num_iters, population_size, games_per_player, new, quiet):
         config = (population_size, games_per_player)
     else:
         try:
-            with open('current/config.pickle', 'rb') as handle:
+            with open('progress/current/config.pickle', 'rb') as handle:
                 config = pickle.load(handle)
-            with open('current/population.pickle', 'rb') as handle:
+            with open('progress/current/population.pickle', 'rb') as handle:
                 population = pickle.load(handle)
-            with open('current/agent_wins.pickle', 'rb') as handle:
+            with open('progress/current/agent_wins.pickle', 'rb') as handle:
                 agent_wins = pickle.load(handle)
-            with open('current/num_innovations.pickle', 'rb') as handle:
+            with open('progress/current/num_innovations.pickle', 'rb') as handle:
                 num_innovations = pickle.load(handle)
-            with open('current/num_species.pickle', 'rb') as handle:
+            with open('progress/current/num_species.pickle', 'rb') as handle:
                 num_species = pickle.load(handle)
-            with open('current/avg_fitness.pickle', 'rb') as handle:
+            with open('progress/current/avg_fitness.pickle', 'rb') as handle:
                 avg_fitness = pickle.load(handle)
-            with open('current/max_fitness.pickle', 'rb') as handle:
+            with open('progress/current/max_fitness.pickle', 'rb') as handle:
                 max_fitness = pickle.load(handle)
             assert population.population_size == population_size
         except AssertionError:
@@ -79,19 +79,19 @@ def train(num_iters, population_size, games_per_player, new, quiet):
         # Save progress
         if i % 5 == 0:
             try:
-                with open('current/config.pickle', 'wb') as handle:
+                with open('progress/current/config.pickle', 'wb') as handle:
                     pickle.dump(config, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                with open('current/population.pickle', 'wb') as handle:
+                with open('progress/current/population.pickle', 'wb') as handle:
                     pickle.dump(population, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                with open('current/agent_wins.pickle', 'wb') as handle:
+                with open('progress/current/agent_wins.pickle', 'wb') as handle:
                     pickle.dump(agent_wins, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                with open('current/num_innovations.pickle', 'wb') as handle:
+                with open('progress/current/num_innovations.pickle', 'wb') as handle:
                     pickle.dump(num_innovations, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                with open('current/num_species.pickle', 'wb') as handle:
+                with open('progress/current/num_species.pickle', 'wb') as handle:
                     pickle.dump(num_species, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                with open('current/avg_fitness.pickle', 'wb') as handle:
+                with open('progress/current/avg_fitness.pickle', 'wb') as handle:
                     pickle.dump(avg_fitness, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                with open('current/max_fitness.pickle', 'wb') as handle:
+                with open('progress/current/max_fitness.pickle', 'wb') as handle:
                     pickle.dump(max_fitness, handle, protocol=pickle.HIGHEST_PROTOCOL)
                 print("Progress saved.")
             except:
