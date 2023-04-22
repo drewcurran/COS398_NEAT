@@ -7,11 +7,9 @@ Author: Drew Curran
 import numpy as np
 
 class Species:
-    def __init__(self, player):
-        self.players = [player]
-        self.representative_player = player
-        self.max_fitness = player.fitness
-        self.average_fitness = player.fitness
+    def __init__(self, players):
+        self.players = players
+        self.sort()
         self.staleness = 0
     
     ### Add player to species

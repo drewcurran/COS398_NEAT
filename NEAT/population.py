@@ -8,10 +8,11 @@ from NEAT.player import Player
 from NEAT.species import Species
 
 class Population:
-    def __init__(self, num_players, num_inputs, num_outputs):
+    def __init__(self, num_players, num_inputs, num_outputs, speciation=True):
         self.population_size = num_players
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
+        self.speciation = speciation
         self.generation = 0
         self.player_history = []
         self.innovation_history = []
@@ -41,11 +42,12 @@ class Population:
                 # Add children
                 for _ in range(num_children):
                     players.append(species.make_child(self.innovation_history))
-            
-            while len(players) < self.population_size:
-                players.append(self.species[0].make_child(self.innovation_history))
-            while len(players) > self.population_size:
-                players.pop()
+        
+        # Ensure population has correct number of players
+        while len(players) < self.population_size:
+            players.append(self.species[0].make_child(self.innovation_history))
+        while len(players) > self.population_size:
+            players.pop()
 
         self.speciate(players)
         self.generation += 1
@@ -81,15 +83,18 @@ class Population:
         self.species = []
 
         # Determine species match
-        for player in players:
-            new_species = True
-            for species in self.species:
-                if species.is_species(player):
-                    species.add_player(player)
-                    new_species = False
-                    break
-            if new_species:        
-                # Add new species if none match
-                self.species.append(Species(player))
+        if self.speciation:
+            for player in players:
+                new_species = True
+                for species in self.species:
+                    if species.is_species(player):
+                        species.add_player(player)
+                        new_species = False
+                        break
+                if new_species:
+                    # Add new species if none match
+                    self.species.append(Species([player]))
+        else:
+            self.species.append(Species([players]))
         
         return self.species
