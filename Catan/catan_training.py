@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument('-g', '--games', help='games per player in population', required=True, type=int)
     parser.add_argument('-n', '--new', help='create new population', action='store_true')
     parser.add_argument('-q', '--quiet', help='hide round progress', action='store_true')
+    parser.add_argument('-s', '--no-speciation', help='disable dividing population into species', action='store_false')
     args = parser.parse_args()
     return args
 
@@ -33,7 +34,7 @@ def print_stats(iteration, num_wins, num_innovations, num_species, avg_fitness, 
     print("Iteration: %d, Wins: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, num_wins, num_innovations, num_species, avg_fitness, max_fitness))
 
 ### Train the neural network
-def train(num_iters, population_size, games_per_player, new, quiet):
+def train(num_iters, population_size, games_per_player, new, quiet, speciation):
     game_agents = [NEATPlayer(Color.ORANGE), RandomPlayer(Color.RED), RandomPlayer(Color.BLUE), RandomPlayer(Color.WHITE)]
     agent = game_agents[0]
 
@@ -41,7 +42,7 @@ def train(num_iters, population_size, games_per_player, new, quiet):
     num_actions = len(ACTION_TYPES)
 
     if new:
-        population = Population(population_size, num_features, num_actions)
+        population = Population(population_size, num_features, num_actions, speciation)
         agent_wins = []
         num_innovations = []
         num_species = []
@@ -131,8 +132,9 @@ def main():
     games_per_player = args.games
     new = args.new
     quiet = args.quiet
+    speciation = args.no_speciation
 
-    train(num_iters, population_size, games_per_player, new, quiet)
+    train(num_iters, population_size, games_per_player, new, quiet, speciation)
     
 if __name__ == '__main__':
     main()

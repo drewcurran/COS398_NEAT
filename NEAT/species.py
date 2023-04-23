@@ -8,7 +8,9 @@ import numpy as np
 
 class Species:
     def __init__(self, players):
-        self.players = players
+        self.players = []
+        for player in players:
+            self.players.append(player)
         self.sort()
         self.staleness = 0
     

@@ -95,6 +95,6 @@ class Population:
                     # Add new species if none match
                     self.species.append(Species([player]))
         else:
-            self.species.append(Species([players]))
+            self.species.append(Species(players))
         
         return self.species
