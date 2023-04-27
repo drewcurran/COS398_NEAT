@@ -25,7 +25,7 @@ class Species:
         # Get parameters
         unmatching_coefficient = 1
         weight_coefficient = 0.5
-        incompatibility_threshold = 5
+        incompatibility_threshold = 3
 
         # Get values related to differences in genomes
         num_unmatching_genes, average_weight_difference = self.representative_player.nn.genome_difference(player.nn)

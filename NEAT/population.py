@@ -36,8 +36,9 @@ class Population:
                 num_children = int(species.average_fitness / self.sum_average_fitness * self.population_size)
 
                 # Add representative player
-                players.append(species.representative_player.clone())
-                num_children -= 1
+                if (num_children >= 1):
+                    players.append(species.representative_player.clone())
+                    num_children -= 1
 
                 # Add children
                 for _ in range(num_children):
