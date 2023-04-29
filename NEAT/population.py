@@ -6,6 +6,8 @@ Author: Drew Curran
 
 from NEAT.player import Player
 from NEAT.species import Species
+from NEAT.parameters import GENETIC_DISTANCE, SPECIES_WANTED, DISTANCE_MODIFIER
+from NEAT.parameters import CULL_RATE, MAX_STALENESS
 
 class Population:
     def __init__(self, num_players, num_inputs, num_outputs, speciation=True):
@@ -19,6 +21,7 @@ class Population:
         self.species = []
         self.sum_average_fitness = 0
         self.max_fitness = 0
+        self.distance_threshold = GENETIC_DISTANCE
 
     ### Create new generation
     def new_generation(self):
@@ -57,12 +60,10 @@ class Population:
 
     ### Enforce natural selection on the players that have played
     def update_generation(self):
-        staleness_coefficient = 15
-
         # Sort each species with regard to fitness and cull
         for species in self.species:
             species.sort()
-            species.cull(0.5)
+            species.cull(CULL_RATE)
 
         # Sort species by best fitness
         self.species.sort(key=lambda k: k.max_fitness, reverse=True)
@@ -71,24 +72,31 @@ class Population:
         # Kill unimproved species
         self.sum_average_fitness = 0
         for species in self.species:
-            if species.staleness > staleness_coefficient and len(self.species) > 1:
+            if species.staleness > MAX_STALENESS and len(self.species) > 1:
                 self.species.remove(species)
             else:
                 self.sum_average_fitness += species.average_fitness
+
+        # Adjust distance threshold
+        if len(self.species) > SPECIES_WANTED:
+            self.distance_threshold += DISTANCE_MODIFIER
+        elif len(self.species) < SPECIES_WANTED:
+            self.distance_threshold -= DISTANCE_MODIFIER
 
         return self.species
 
     ### Separate players into species
     def speciate(self, players):
-        # Empty species lists
-        self.species = []
+        # Empty species player lists
+        for species in self.species:
+            species.players = []
 
         # Determine species match
         if self.speciation:
             for player in players:
                 new_species = True
                 for species in self.species:
-                    if species.is_species(player):
+                    if species.is_species(player, self.distance_threshold):
                         species.add_player(player)
                         new_species = False
                         break

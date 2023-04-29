@@ -8,9 +8,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from NEAT.node import Node
-from NEAT.connection_gene import ConnectionGene
-from NEAT.connection_history import ConnectionHistory
+from NEAT.connection import Connection
+from NEAT.innovation import InnovationMarker
 from NEAT.helper_functions import sigmoid
+from NEAT.parameters import PR_INHERIT_FITTER, PR_ENABLE
+from NEAT.parameters import PR_MUTATE_NEURON, PR_MUTATE_GENE, PR_MUTATE_WEIGHTS
 
 class Genome:
     def __init__(self, num_inputs, num_outputs, num_layers = 2):
@@ -57,9 +59,9 @@ class Genome:
             return None
 
         # Retrieve the genome label if mutation already exists
-        for gene in history:
-            if gene.matches(self, from_node, to_node):
-                label = gene.innovation_label
+        for mutation in history:
+            if mutation.matches(self, from_node, to_node):
+                label = mutation.innovation_label
         
         # Make a new mutation
         gene_labels = []
@@ -67,11 +69,11 @@ class Genome:
             gene_labels.append(gene.innovation_label)
         if label is None:
             label = len(history)
-            mutation = ConnectionHistory(from_node.label, to_node.label, label, gene_labels)
+            mutation = InnovationMarker(from_node.label, to_node.label, label, gene_labels)
             history.append(mutation)
 
         # Add connection to genome
-        connection = ConnectionGene(from_node, to_node, weight, label)
+        connection = Connection(from_node, to_node, weight, label)
         self.genes.append(connection)
         if not self.non_bias_connection and connection.from_node != self.bias_node:
             self.non_bias_connection = True
@@ -220,18 +222,18 @@ class Genome:
         connections = []
 
         # Mutate node
-        if np.random.uniform() < 0.05:
+        if np.random.uniform() < PR_MUTATE_NEURON:
             node, node_connections = self.mutate_node(history)
             nodes.append(node)
             connections.append(node_connections)
         
         # Mutate connection
-        if np.random.uniform() < 0.1 or len(self.genes) == 0:
+        if np.random.uniform() < PR_MUTATE_GENE or len(self.genes) == 0:
             connection = self.mutate_connection(history)
             connections.append(connection)
         
         # Mutate weights
-        if np.random.uniform() < 0.8:
+        if np.random.uniform() < PR_MUTATE_WEIGHTS:
             for gene in self.genes:
                 gene.mutate_weight()
         
@@ -266,12 +268,12 @@ class Genome:
                 if mate_gene.innovation_label == gene.innovation_label:
                     # Determine whether the gene is enabled
                     if not gene.enabled or not mate_gene.enabled:
-                        enabled = np.random.uniform() < 0.25
+                        enabled = np.random.uniform() < PR_ENABLE
                     else:
                         enabled = True
 
                     # Inheritance from mate
-                    if np.random.uniform() < 0.5:
+                    if np.random.uniform() < PR_INHERIT_FITTER:
                         weight = gene.weight
                     else:
                         weight = mate_gene.weight

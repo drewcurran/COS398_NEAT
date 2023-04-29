@@ -6,6 +6,9 @@ Author: Drew Curran
 
 import numpy as np
 
+from NEAT.parameters import PR_CLONE
+from NEAT.parameters import GENETIC_DISTANCE, EXCESS_DISJOINT_COEFF, WEIGHT_DIFF_COEFF, GENE_OFFSET
+
 class Species:
     def __init__(self, players):
         self.players = []
@@ -13,6 +16,7 @@ class Species:
             self.players.append(player)
         self.sort()
         self.staleness = 0
+        self.distance_threshold = GENETIC_DISTANCE
     
     ### Add player to species
     def add_player(self, player):
@@ -22,23 +26,18 @@ class Species:
     
     ### Test whether player is in species
     def is_species(self, player):
-        # Get parameters
-        unmatching_coefficient = 1
-        weight_coefficient = 0.5
-        incompatibility_threshold = 3
-
         # Get values related to differences in genomes
         num_unmatching_genes, average_weight_difference = self.representative_player.nn.genome_difference(player.nn)
         
         # Get normalization for number of genes
-        normalizer = len(player.nn.genes) - 20
+        normalizer = len(player.nn.genes) - GENE_OFFSET
         if normalizer < 1:
             normalizer = 1
 
         # Define incompatibility based on differences in genomes
-        incompatibility = num_unmatching_genes * unmatching_coefficient / normalizer + average_weight_difference * weight_coefficient
+        incompatibility = num_unmatching_genes * EXCESS_DISJOINT_COEFF / normalizer + average_weight_difference * WEIGHT_DIFF_COEFF
 
-        return incompatibility < incompatibility_threshold
+        return incompatibility < self.distance_threshold
 
     ### Sort the species according to fitness
     def sort(self):
@@ -68,7 +67,7 @@ class Species:
     
     ### Make a child player in the next generation
     def make_child(self, history):
-        if np.random.uniform() < 0.25:
+        if np.random.uniform() < PR_CLONE:
             parent = self.select_player()
             child = parent.clone()
         else:

@@ -7,8 +7,10 @@ Author: Drew Curran
 import numpy as np
 
 from NEAT.helper_functions import relu
+from NEAT.parameters import MAX_WEIGHT
+from NEAT.parameters import PR_WEIGHT_RANDOM, WEIGHT_PERTURB
 
-class ConnectionGene:
+class Connection:
     def __init__(self, from_node, to_node, weight, innovation_label, enabled=True):
       self.from_node = from_node
       self.to_node = to_node
@@ -19,16 +21,16 @@ class ConnectionGene:
     ### Change the weight
     def mutate_weight(self):
         # Mutate 10% of the time
-        if (np.random.uniform() < 0.1):
-            self.weight = np.random.uniform(-1, 1)
+        if (np.random.uniform() < PR_WEIGHT_RANDOM):
+            self.weight = np.random.uniform(-MAX_WEIGHT, MAX_WEIGHT)
         # Slight change if not mutated
         else:
-            self.weight += np.random.normal(0, 0.02)
+            self.weight += np.random.normal(0, WEIGHT_PERTURB)
         # Keep within bounds
-        if self.weight > 1:
-           self.weight = 1
-        elif self.weight < -1:
-           self.weight = -1
+        if self.weight > MAX_WEIGHT:
+           self.weight = MAX_WEIGHT
+        elif self.weight < -MAX_WEIGHT:
+           self.weight = -MAX_WEIGHT
 
     ### Send output of a node to input of a second node
     def send_value(self):
@@ -41,7 +43,7 @@ class ConnectionGene:
 
     ### Return a copy
     def clone(self, from_node, to_node):
-        clone = ConnectionGene(from_node, to_node, self.weight, self.innovation_label, enabled=self.enabled)
+        clone = Connection(from_node, to_node, self.weight, self.innovation_label, enabled=self.enabled)
         return clone
     
     ### Modify connection 

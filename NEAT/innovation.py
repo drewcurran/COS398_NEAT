@@ -1,10 +1,10 @@
 '''
-connection_history.py
-Description: The connection history allows to test if a mutation is in the same history when a new connection is added.
+innovation.py
+Description: Historical marker to see if a mutation has the same origin when a new connection is added.
 Author: Drew Curran
 '''
 
-class ConnectionHistory:
+class InnovationMarker:
     def __init__(self, from_node, to_node, innovation_label, gene_labels):
         self.from_node = from_node
         self.to_node = to_node
