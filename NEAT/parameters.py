@@ -1,0 +1,33 @@
+'''
+parameters.py
+Description: Parameters specified for algorithm
+Author: Drew Curran
+'''
+
+# Restrictions
+MAX_WEIGHT = 1.0
+
+# Reproduction
+PR_CLONE = 0.25
+PR_INTERSPECIES = 0.05
+PR_INHERIT_FITTER = 0.5
+PR_ENABLE = 0.25
+
+# Mutation
+PR_MUTATE_NEURON = 0.01
+PR_MUTATE_GENE = 0.1
+PR_MUTATE_WEIGHTS = 0.8
+PR_WEIGHT_RANDOM = 0.1
+WEIGHT_PERTURB = 0.02
+
+# Speciation
+GENETIC_DISTANCE = 3.0
+SPECIES_WANTED = 10
+DISTANCE_MODIFIER = 0.3
+EXCESS_COEFF = 1.0
+DISJOINT_COEFF = 1.0
+WEIGHT_DIFF_COEFF = 2.0
+
+# Selection
+CULL_RATE = 0.5
+MAX_STALENESS = 30

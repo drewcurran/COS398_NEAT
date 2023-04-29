@@ -5,16 +5,11 @@ Author: Drew Curran
 '''
 
 class Node:
-    def __init__(self, label, layer=0):
+    def __init__(self, label:int, layer:int):
         self.label = label
-        self.input_value = 0
         self.layer = layer
+        self.input_value = 0
         self.draw_location = None
-        
-    ### Return a copy
-    def clone(self):
-        clone = Node(self.label, layer = self.layer)
-        return clone
     
     ### To string
     def __str__(self):
