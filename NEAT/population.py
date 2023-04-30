@@ -55,9 +55,7 @@ class Population:
 
         # Add fittest player from each species to population
         for species in self.species:
-            fittest_player = species.fittest_player
-            species.players = [fittest_player]
-            players.append(fittest_player)
+            players.append(species.fittest_player)
 
         # Generate players from the previous population
         while len(players) < self.population_size:
@@ -97,6 +95,10 @@ class Population:
 
     ### Separate players into species
     def speciate(self):
+        # Reset species
+        for species in self.species:
+            species.reset_species()
+        
         # Determine closest species
         for player in self.players:
             min_distance = float('inf')

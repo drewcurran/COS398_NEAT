@@ -15,6 +15,10 @@ class Species:
         self.players = []
         self.max_fitness = 0
         self.staleness = 0
+
+    ### Reset species keeping the fittest player 
+    def reset_species(self):
+        self.players = [self.fittest_player]
     
     ### Add player to species
     def add_player(self, player):
@@ -82,11 +86,8 @@ class Species:
         else:
             avg_weight_difference = 0
 
+        print(excess, disjoint, avg_weight_difference, num_genes)
+        player.print_state()
+        species_player.print_state()
+
         return EXCESS_COEFF * excess / num_genes + DISJOINT_COEFF * disjoint / num_genes + WEIGHT_DIFF_COEFF * avg_weight_difference
-    
-    ### Get the average species fitness
-    def average_fitness(self) -> float:
-        fitness = 0
-        for player in self.players:
-            fitness += player.fitness
-        return fitness / len(self.players)
