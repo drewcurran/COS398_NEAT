@@ -4,8 +4,6 @@ Description: Innovation marker to track genetic history.
 Author: Drew Curran
 '''
 
-from NEAT.node import Node
-
 class InnovationHistory:
     def __init__(self, node_label:int):
         self.innovations = []

@@ -11,9 +11,10 @@ from NEAT.node import Node
 from NEAT.connection import Connection
 
 class Organism:
-    def __init__(self, num_inputs:int, num_outputs:int):
+    def __init__(self, num_inputs:int, num_outputs:int, num_layers:int=2):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
+        self.num_layers = num_layers
         self.initialize_genome()
 
     ### Initialize the genome
@@ -22,8 +23,7 @@ class Organism:
         self.genes = []
         self.innovation_labels = []
         self.num_neurons = 0
-        self.num_layers = 2
-
+        
         # Add input neurons
         self.neurons[0] = []
         for _ in range(self.num_inputs + 1):
@@ -31,9 +31,10 @@ class Organism:
         self.bias = self.neurons[0][0]
 
         # Add output neurons
-        self.neurons[1] = []
+        self.neurons[self.num_layers - 1] = []
         for _ in range(self.num_outputs):
-            self.add_neuron(self.num_neurons, 1)
+            self.add_neuron(self.num_neurons, self.num_layers - 1)
+        self.neurons = dict(sorted(self.neurons.items()))
     
     ### Give fitness value to organism
     def set_fitness(self, fitness:float):
@@ -64,11 +65,6 @@ class Organism:
                 neuron.input_value = 0
         
         return out
-
-    ### Mutate the genome weights
-    def mutate_weights(self):
-        for gene in self.genes:
-            gene.mutate_weight()
 
     ### Get neuron with matching label
     def get_neuron(self, label:int) -> Node:

@@ -20,8 +20,8 @@ class Connection:
     
     ### Change the weight
     def mutate_weight(self):
-        # Mutate 10% of the time
-        if (np.random.uniform() < PR_WEIGHT_RANDOM):
+        # Mutate weight randomly
+        if np.random.uniform() < PR_WEIGHT_RANDOM:
             self.weight = np.random.uniform(-MAX_WEIGHT, MAX_WEIGHT)
         # Slight change if not mutated
         else:

@@ -13,7 +13,7 @@ from NEAT.parameters import MAX_WEIGHT
 from NEAT.parameters import PR_CLONE, PR_INTERSPECIES, PR_INHERIT_FITTER, PR_ENABLE
 from NEAT.parameters import PR_MUTATE_NEURON, PR_MUTATE_GENE, PR_MUTATE_WEIGHTS
 from NEAT.parameters import GENETIC_DISTANCE, SPECIES_WANTED, DISTANCE_MODIFIER
-from NEAT.parameters import MAX_STALENESS
+from NEAT.parameters import POPULATION_CULL_RATE, SPECIES_CULL_RATE, MAX_STALENESS
 
 class Population:
     def __init__(self, num_players:int, num_inputs:int, num_outputs:int):
@@ -37,10 +37,7 @@ class Population:
 
     ### Enforce natural selection on the players that have played
     def update_generation(self):
-        for species in self.species:
-            species.sort()
-            species.cull()
-
+        self.cull()
         self.update_species()
 
     ### Initialize the population
@@ -95,26 +92,40 @@ class Population:
         # Determine closest species
         for player in self.players:
             min_distance = float('inf')
-            for species in self.species:
-                distance = species.genome_distance(player)
+            for i in range(len(self.species)):
+                distance = self.species[i].genome_distance(player)
                 if distance < self.species_threshold:
                     if distance < min_distance:
+                        closest_species = i
                         min_distance = distance
-                        closest_species = species
             
             # Add new species if no species is close enough
             if min_distance > self.species_threshold:
-                closest_species = Species()
-                self.species.append(closest_species)
+                closest_species = len(self.species)
+                self.species.append(Species())
 
             # Assign player to closest species
-            closest_species.add_player(player)
+            self.species[closest_species].add_player(player)
         
         # Adjust threshold distance based on number of species
         if len(self.species) > SPECIES_WANTED:
             self.species_threshold /= DISTANCE_MODIFIER
         elif len(self.species) < SPECIES_WANTED:
             self.species_threshold *= DISTANCE_MODIFIER
+
+    def cull(self):
+        # Cull population lightly
+        self.players.sort(key=lambda k: k.fitness, reverse=True)
+        desired_size = int((len(self.players) * POPULATION_CULL_RATE))
+        self.players = self.players[0:desired_size+1]
+
+        # Cull within species
+        for species in self.species:
+            species.sort()
+            culled_players = species.cull()
+            for player in culled_players:
+                if player in self.players:
+                    self.players.remove(player)
 
     ### Update species based on performance
     def update_species(self):
@@ -200,9 +211,6 @@ class Population:
 
     ### Crossover between two parent genomes
     def crossover(self, parent1:Organism, parent2:Organism) -> Organism:
-        # Create skeleton for child genome
-        child = Organism(self.num_inputs, self.num_outputs)
-
         # Fitter parent is the base
         if parent1.fitness > parent2.fitness:
             base_mate = parent1
@@ -211,13 +219,18 @@ class Population:
             base_mate = parent2
             partner_mate = parent1
 
-        # Use neurons of the base
-        for layer_neurons in base_mate.neurons.values():
-            for neuron in layer_neurons:
-                child.add_neuron(neuron.label, neuron.layer)
+        # Create skeleton for child genome
+        child = Organism(base_mate.num_inputs, base_mate.num_outputs, num_layers=base_mate.num_layers)
+
+        # Use neurons of the parent
+        for layer, layer_neurons in sorted(base_mate.neurons.items(), reverse=True):
+            if layer != 0 and layer != base_mate.num_layers - 1:
+                for neuron in layer_neurons:
+                    child.add_neuron(neuron.label, neuron.layer)
 
         # Crossover for connection genes
         for base_gene in base_mate.genes:
+            # Shared innovation
             if base_gene.innovation_label in partner_mate.innovation_labels:
                 partner_gene = partner_mate.get_gene(base_gene.innovation_label)
 
@@ -232,8 +245,11 @@ class Population:
                     enabled = np.random.uniform() < PR_ENABLE
                 else:
                     enabled = True
+            
+            # Excess or disjoint innovation
             else:
                 weight = base_gene.weight
+                enabled = True
             
             from_node = child.get_neuron(base_gene.from_node.label)
             to_node = child.get_neuron(base_gene.to_node.label)
@@ -244,7 +260,7 @@ class Population:
     ### Clone from one parent genome
     def clone(self, parent:Organism) -> Organism:
         # Create skeleton for child genome
-        child = Organism(self.num_inputs, self.num_outputs)
+        child = Organism(parent.num_inputs, parent.num_outputs, num_layers=parent.num_layers)
 
         # Use neurons of the parent
         for layer, layer_neurons in sorted(parent.neurons.items(), reverse=True):

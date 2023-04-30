@@ -8,7 +8,7 @@ import numpy as np
 
 from NEAT.organism import Organism
 from NEAT.parameters import EXCESS_COEFF, DISJOINT_COEFF, WEIGHT_DIFF_COEFF, NORMALIZE_OFFSET
-from NEAT.parameters import CULL_RATE
+from NEAT.parameters import SPECIES_CULL_RATE
 
 class Species:
     def __init__(self):
@@ -34,10 +34,10 @@ class Species:
         else:
             self.staleness += 1
     
-    def cull(self):
+    def cull(self) -> list[Organism]:
         # Truncate species to proportion given
-        desired_size = int((len(self.players) * CULL_RATE))
-        self.players = self.players[0:desired_size+1]
+        desired_size = int((len(self.players) * SPECIES_CULL_RATE))
+        return self.players[desired_size:]
     
     ### Get number of unmatching genes with another genome
     def genome_distance(self, player:Organism) -> float:
