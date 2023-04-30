@@ -46,7 +46,7 @@ class Population:
     ### Initialize the population
     def initialize_population(self) -> list[Organism]:
         self.innovation_history = InnovationHistory(self.num_inputs + self.num_outputs + 2)
-        self.players = [Organism(self.num_inputs, self.num_outputs, self.generation) for _ in range(self.population_size)]
+        self.players = [Organism(self.num_inputs, self.num_outputs) for _ in range(self.population_size)]
 
     ### Reproduce using surviving players
     def reproduce(self) -> list[Organism]:
@@ -63,6 +63,7 @@ class Population:
             if np.random.uniform() < PR_CLONE:
                 parent = self.players[np.random.randint(len(self.players))]
                 child = self.clone(parent)
+
             # Crossover between two parents
             else:
                 if np.random.uniform() < PR_INTERSPECIES:
@@ -73,6 +74,8 @@ class Population:
                     parent1 = species.players[np.random.randint(len(species.players))]
                     parent2 = species.players[np.random.randint(len(species.players))]
                 child = self.crossover(parent1, parent2)
+            
+            # Add child to player list
             players.append(child)
         
         # Set population players to new generation
@@ -81,17 +84,7 @@ class Population:
     ### Mutate player genomes
     def mutate(self):
         for player in self.players:
-            # Mutate neuron
-            if np.random.uniform() < PR_MUTATE_NEURON:
-                self.mutate_neuron(player)
-            
-            # Mutate connection
-            if np.random.uniform() < PR_MUTATE_GENE or len(player.genes) == 0:
-                self.mutate_connection(player)
-            
-            # Mutate weights
-            if np.random.uniform() < PR_MUTATE_WEIGHTS:
-                self.mutate_weights(player)
+            self.mutate_genome(player)
 
     ### Separate players into species
     def speciate(self):
@@ -142,28 +135,31 @@ class Population:
                 if player in self.players:
                     self.players.remove(player)
     
+    ### Mutate genome
+    def mutate_genome(self, player:Organism):
+        # Mutate neuron
+        if np.random.uniform() < PR_MUTATE_NEURON:
+            self.mutate_neuron(player)
+        
+        # Mutate gene
+        if np.random.uniform() < PR_MUTATE_GENE or len(player.genes) == 0:
+            self.mutate_gene(player)
+        
+        # Mutate weights
+        if np.random.uniform() < PR_MUTATE_WEIGHTS:
+            self.mutate_weights(player)
+    
     ### Mutate the genome by adding a new neuron
     def mutate_neuron(self, player:Organism):
-        # Find a valid connection
-        if len(player.genes) == 0:
+        # Find a gene to split
+        gene = player.find_split_gene()
+        if gene is None:
             return
-        gene = player.genes[np.random.randint(len(player.genes))]
-        if gene.from_node == player.bias:
-            return
-        gene.enabled = False
 
-        # Adjust neuron layers
+        # Adjust layers if applicable
         neuron_layer = gene.from_node.layer + 1
         if neuron_layer == gene.to_node.layer:
-            for layer, layer_neurons in sorted(player.neurons.items(), reverse=True):
-                if layer < gene.to_node.layer:
-                    break
-                for neuron in layer_neurons:
-                    neuron.layer += 1
-                player.neurons[layer + 1] = player.neurons.pop(layer)
-            player.neurons[neuron_layer] = []
-            player.neurons = dict(sorted(player.neurons.items()))
-            player.num_layers += 1
+            player.adjust_layers(neuron_layer)
 
         # Add a new neuron
         label = self.innovation_history.new_node()
@@ -171,42 +167,30 @@ class Population:
         neuron = player.get_neuron(label)
 
         # Make connection between from neuron and new neuron
-        label = self.innovation_history.add_innovation(gene.from_node, neuron)
+        label = self.innovation_history.add_innovation(gene.from_node.label, neuron.label)
         player.add_gene(label, gene.from_node, neuron, 1)
 
         # Make connection between new neuron and to neuron
-        label = self.innovation_history.add_innovation(neuron, gene.to_node)
+        label = self.innovation_history.add_innovation(neuron.label, gene.to_node.label)
         player.add_gene(label, neuron, gene.to_node, gene.weight)
 
         # Make connection between bias neuron and new neuron
-        label = self.innovation_history.add_innovation(player.bias, neuron)
+        label = self.innovation_history.add_innovation(player.bias.label, neuron.label)
         player.add_gene(label, player.bias, neuron, 0)
 
     ### Mutate genome by adding a new connection
-    def mutate_connection(self, player:Organism):
-        # Find a new connection
-        neuron_list = []
-        for neurons in player.neurons.values():
-            neuron_list.extend(neurons)
-        neuron1 = np.random.choice(neuron_list)
-        neuron2 = np.random.choice(neuron_list)
-
-        # Mutate only if gene can be made
-        if neuron1.layer == neuron2.layer or player.is_gene(neuron1, neuron2):
+    def mutate_gene(self, player:Organism):
+        # Find a gene to mutate
+        gene = player.find_mutate_gene()
+        if gene is None:
             return
-        
-        # Set from and to neurons based on layers
-        if neuron1.layer < neuron2.layer:
-            from_neuron = neuron1
-            to_neuron = neuron2
         else:
-            from_neuron = neuron2
-            to_neuron = neuron1
+            from_neuron, to_neuron = gene
         
         # Make connection between from neuron and to neuron
-        label = self.innovation_history.find_innovation(from_neuron, to_neuron)
+        label = self.innovation_history.find_innovation(from_neuron.label, to_neuron.label)
         if label == -1:
-            label = self.innovation_history.add_innovation(from_neuron, to_neuron)
+            label = self.innovation_history.add_innovation(from_neuron.label, to_neuron.label)
         player.add_gene(label, from_neuron, to_neuron, np.random.uniform(-MAX_WEIGHT, MAX_WEIGHT))
     
     ### Mutate genome by modifying weights
@@ -217,7 +201,7 @@ class Population:
     ### Crossover between two parent genomes
     def crossover(self, parent1:Organism, parent2:Organism) -> Organism:
         # Create skeleton for child genome
-        child = Organism(self.num_inputs, self.num_outputs, self.generation)
+        child = Organism(self.num_inputs, self.num_outputs)
 
         # Fitter parent is the base
         if parent1.fitness > parent2.fitness:
@@ -248,26 +232,31 @@ class Population:
                     enabled = np.random.uniform() < PR_ENABLE
                 else:
                     enabled = True
-                
-                child.add_gene(base_gene.innovation_label, base_gene.from_node, base_gene.to_node, weight, enabled=enabled)
             else:
-                child.add_gene(base_gene.innovation_label, base_gene.from_node, base_gene.to_node, base_gene.weight, enabled=base_gene.enabled)
+                weight = base_gene.weight
+            
+            from_node = child.get_neuron(base_gene.from_node.label)
+            to_node = child.get_neuron(base_gene.to_node.label)
+            child.add_gene(base_gene.innovation_label, from_node, to_node, weight, enabled=enabled)
         
         return child
     
     ### Clone from one parent genome
     def clone(self, parent:Organism) -> Organism:
         # Create skeleton for child genome
-        child = Organism(self.num_inputs, self.num_outputs, self.generation)
+        child = Organism(self.num_inputs, self.num_outputs)
 
         # Use neurons of the parent
-        for layer_neurons in parent.neurons.values():
-            for neuron in layer_neurons:
-                child.add_neuron(neuron.label, neuron.layer)
+        for layer, layer_neurons in sorted(parent.neurons.items(), reverse=True):
+            if layer != 0 and layer != parent.num_layers - 1:
+                for neuron in layer_neurons:
+                    child.add_neuron(neuron.label, neuron.layer)
 
         # Add genes
         for gene in parent.genes:
-            child.add_gene(gene.innovation_label, gene.from_node, gene.to_node, gene.weight, enabled=gene.enabled)
+            from_node = child.get_neuron(gene.from_node.label)
+            to_node = child.get_neuron(gene.to_node.label)
+            child.add_gene(gene.innovation_label, from_node, to_node, gene.weight, enabled=gene.enabled)
         
         return child
         

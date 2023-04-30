@@ -53,7 +53,7 @@ class Species:
         for gene in player.genes:
             corresponding_gene = species_player.get_gene(gene.innovation_label)
             if corresponding_gene is None:
-                if len(species_player.innovation_labels) > 0 and gene.innovation_label > np.max(species_player.innovation_labels):
+                if len(species_player.innovation_labels) == 0 or gene.innovation_label > np.max(species_player.innovation_labels):
                     excess += 1
                 else:
                     disjoint += 1
@@ -64,7 +64,7 @@ class Species:
         for gene in species_player.genes:
             corresponding_gene = player.get_gene(gene.innovation_label)
             if corresponding_gene is None:
-                if len(player.innovation_labels) > 0 and gene.innovation_label > np.max(player.innovation_labels):
+                if len(player.innovation_labels) == 0 or gene.innovation_label > np.max(player.innovation_labels):
                     excess += 1
                 else:
                     disjoint += 1
@@ -85,9 +85,5 @@ class Species:
             avg_weight_difference = np.mean(weight_difference)
         else:
             avg_weight_difference = 0
-
-        print(excess, disjoint, avg_weight_difference, num_genes)
-        player.print_state()
-        species_player.print_state()
 
         return EXCESS_COEFF * excess / num_genes + DISJOINT_COEFF * disjoint / num_genes + WEIGHT_DIFF_COEFF * avg_weight_difference

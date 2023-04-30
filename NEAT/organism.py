@@ -11,10 +11,9 @@ from NEAT.node import Node
 from NEAT.connection import Connection
 
 class Organism:
-    def __init__(self, num_inputs:int, num_outputs:int, generation:int):
+    def __init__(self, num_inputs:int, num_outputs:int):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
-        self.generation = generation
         self.initialize_genome()
 
     ### Initialize the genome
@@ -85,6 +84,72 @@ class Organism:
             if gene.innovation_label == label:
                 return gene
         return None
+    
+    ### Find a gene to split
+    def find_split_gene(self) -> tuple[Node, Node] | None:
+        # Escape if there are only bias connections
+        all_bias = True
+        for gene in self.genes:
+            if gene.from_node != self.bias:
+                all_bias = False
+                break
+        if all_bias == True:
+            return None
+
+        # Find a connection without the bias node (bias should not be disconnected)
+        gene = self.genes[np.random.randint(len(self.genes))]
+        
+        while gene.from_node == self.bias:
+            gene = self.genes[np.random.randint(len(self.genes))]
+        
+        # Disable the connection
+        gene.enabled = False
+        
+        return gene
+
+    ### Find a new gene to mutate
+    def find_mutate_gene(self) -> tuple[Node, Node] | None:
+        # Escape if fully connected
+        nodes_before = 0
+        max_genes = 0
+        for layer_nodes in self.neurons.values():
+            max_genes += nodes_before * len(layer_nodes)
+            nodes_before += len(layer_nodes)
+        if len(self.genes) == max_genes:
+            return None
+        
+        # Find a new connection
+        list_neurons = []
+        for layer_neurons in self.neurons.values():
+            list_neurons.extend(layer_neurons)
+        neuron1 = np.random.choice(list_neurons)
+        neuron2 = np.random.choice(list_neurons)
+        while neuron1.layer == neuron2.layer or self.is_gene(neuron1, neuron2):
+            neuron1 = np.random.choice(list_neurons)
+            neuron2 = np.random.choice(list_neurons)
+        
+        # Set from and to neurons based on layers
+        if neuron1.layer < neuron2.layer:
+            return neuron1, neuron2
+        else:
+            return neuron2, neuron1
+    
+    ### Adjust layers for new neuron
+    def adjust_layers(self, neuron_layer):
+        # Shift layers
+        for layer, layer_neurons in sorted(self.neurons.items(), reverse=True):
+            if layer < neuron_layer:
+                break
+            for neuron in layer_neurons:
+                neuron.layer += 1
+            self.neurons[layer + 1] = self.neurons.pop(layer)
+
+        # Add new layer
+        self.neurons[neuron_layer] = []
+
+        # Sort layers
+        self.neurons = dict(sorted(self.neurons.items()))
+        self.num_layers += 1
     
     ### Add a neuron to the genome
     def add_neuron(self, label:int, layer:int):
