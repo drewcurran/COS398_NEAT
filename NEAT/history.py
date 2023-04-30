@@ -7,7 +7,7 @@ Author: Drew Curran
 from NEAT.node import Node
 
 class InnovationHistory:
-    def __init__(self, node_label):
+    def __init__(self, node_label:int):
         self.innovations = []
         self.node_label = node_label
     

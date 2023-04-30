@@ -12,7 +12,7 @@ from NEAT.history import InnovationHistory
 from NEAT.parameters import MAX_WEIGHT
 from NEAT.parameters import PR_CLONE, PR_INTERSPECIES, PR_INHERIT_FITTER, PR_ENABLE
 from NEAT.parameters import PR_MUTATE_NEURON, PR_MUTATE_GENE, PR_MUTATE_WEIGHTS
-from NEAT.parameters import GENETIC_DISTANCE
+from NEAT.parameters import GENETIC_DISTANCE, SPECIES_WANTED, DISTANCE_MODIFIER
 from NEAT.parameters import MAX_STALENESS
 
 class Population:
@@ -23,6 +23,7 @@ class Population:
         self.generation = 0
         self.players = []
         self.species = []
+        self.species_threshold = GENETIC_DISTANCE
 
     ### Create a new generation
     def new_generation(self) -> list[Organism]:
@@ -40,17 +41,7 @@ class Population:
             species.sort()
             species.cull()
 
-        self.species.sort(key=lambda k: k.fittest_player.fitness, reverse=True)
-        self.max_fitness = self.species[0].fittest_player.fitness
-
-        stale_species = []
-        for species in self.species:
-            if self.generation - species.fittest_player.generation >= MAX_STALENESS:
-                stale_species.append(species)
-        if len(stale_species) > 0:
-            for player in stale_species[0].players:
-                if player in self.players:
-                    self.players.remove(player)
+        self.update_species()
 
     ### Initialize the population
     def initialize_population(self) -> list[Organism]:
@@ -59,15 +50,22 @@ class Population:
 
     ### Reproduce using surviving players
     def reproduce(self) -> list[Organism]:
+        # Initialize player list
         players = []
+
+        # Add fittest player from each species to population
         for species in self.species:
             fittest_player = species.fittest_player
             species.players = [fittest_player]
             players.append(fittest_player)
+
+        # Generate players from the previous population
         while len(players) < self.population_size:
+            # Clone from a single parent
             if np.random.uniform() < PR_CLONE:
                 parent = self.players[np.random.randint(len(self.players))]
                 child = self.clone(parent)
+            # Crossover between two parents
             else:
                 if np.random.uniform() < PR_INTERSPECIES:
                     parent1 = self.players[np.random.randint(len(self.players))]
@@ -78,6 +76,8 @@ class Population:
                     parent2 = species.players[np.random.randint(len(species.players))]
                 child = self.crossover(parent1, parent2)
             players.append(child)
+        
+        # Set population players to new generation
         self.players = players
     
     ### Mutate player genomes
@@ -97,22 +97,52 @@ class Population:
 
     ### Separate players into species
     def speciate(self):
-        # Determine species match
+        # Determine closest species
         for player in self.players:
-            new_species = True
+            min_distance = float('inf')
             for species in self.species:
                 distance = species.genome_distance(player)
-                if distance < GENETIC_DISTANCE:
-                    species.add_player(player)
-                    new_species = False
-                    break
-            if new_species:
-                # Add new species if none match
-                self.species.append(Species(player))
+                if distance < self.species_threshold:
+                    if distance < min_distance:
+                        min_distance = distance
+                        closest_species = species
+            
+            # Add new species if no species is close enough
+            if min_distance > self.species_threshold:
+                closest_species = Species()
+                self.species.append(closest_species)
+
+            # Assign player to closest species
+            closest_species.add_player(player)
+        
+        # Adjust threshold distance based on number of species
+        if len(self.species) > SPECIES_WANTED:
+            self.species_threshold /= DISTANCE_MODIFIER
+        elif len(self.species) < SPECIES_WANTED:
+            self.species_threshold *= DISTANCE_MODIFIER
+
+    ### Update species based on performance
+    def update_species(self):
+        # Sort species according to fitness
+        self.species.sort(key=lambda k: k.fittest_player.fitness, reverse=True)
+        self.max_fitness = self.species[0].fittest_player.fitness
+
+        # Find stale species
+        stale_species = []
+        for species in self.species:
+            if species.staleness >= MAX_STALENESS:
+                stale_species.append(species)
+        
+        # Remove worst-performing stale species
+        if len(stale_species) > 0:
+            stale_species.sort(key=lambda k: k.fittest_player.fitness)
+            for player in stale_species[0].players:
+                if player in self.players:
+                    self.players.remove(player)
     
     ### Mutate the genome by adding a new neuron
     def mutate_neuron(self, player:Organism):
-        # Find a connection without the bias neuron (bias should not be disconnected)
+        # Find a valid connection
         if len(player.genes) == 0:
             return
         gene = player.genes[np.random.randint(len(player.genes))]
@@ -158,8 +188,12 @@ class Population:
             neuron_list.extend(neurons)
         neuron1 = np.random.choice(neuron_list)
         neuron2 = np.random.choice(neuron_list)
+
+        # Mutate only if gene can be made
         if neuron1.layer == neuron2.layer or player.is_gene(neuron1, neuron2):
             return
+        
+        # Set from and to neurons based on layers
         if neuron1.layer < neuron2.layer:
             from_neuron = neuron1
             to_neuron = neuron2

@@ -7,12 +7,14 @@ Author: Drew Curran
 import numpy as np
 
 from NEAT.organism import Organism
-from NEAT.parameters import EXCESS_COEFF, DISJOINT_COEFF, WEIGHT_DIFF_COEFF
+from NEAT.parameters import EXCESS_COEFF, DISJOINT_COEFF, WEIGHT_DIFF_COEFF, NORMALIZE_OFFSET
 from NEAT.parameters import CULL_RATE
 
 class Species:
-    def __init__(self, player):
-        self.players = [player]
+    def __init__(self):
+        self.players = []
+        self.max_fitness = 0
+        self.staleness = 0
     
     ### Add player to species
     def add_player(self, player):
@@ -22,6 +24,11 @@ class Species:
     def sort(self):
         self.players.sort(key=lambda k: k.fitness, reverse=True)
         self.fittest_player = self.players[0]
+        if (self.fittest_player.fitness > self.max_fitness):
+            self.max_fitness = self.fittest_player.fitness
+            self.staleness = 0
+        else:
+            self.staleness += 1
     
     def cull(self):
         # Truncate species to proportion given
@@ -33,9 +40,12 @@ class Species:
         # Choose random player in species
         species_player = self.players[np.random.randint(len(self.players))]
 
+        # Initialize values
         excess = 0
         disjoint = 0
         weight_difference = []
+
+        # Find excess, disjoint, and weight difference for all given player genes
         for gene in player.genes:
             corresponding_gene = species_player.get_gene(gene.innovation_label)
             if corresponding_gene is None:
@@ -45,6 +55,8 @@ class Species:
                     disjoint += 1
             else:
                 weight_difference.append(abs(gene.weight - corresponding_gene.weight))
+
+        # Find excess, disjoint, and weight difference for all species player genes
         for gene in species_player.genes:
             corresponding_gene = player.get_gene(gene.innovation_label)
             if corresponding_gene is None:
@@ -53,13 +65,18 @@ class Species:
                 else:
                     disjoint += 1
 
+        # Find number of genes in the larger genome
         if len(player.genes) > len(species_player.genes):
             num_genes = len(player.genes)
         else:
             num_genes = len(species_player.genes)
-        if num_genes == 0:
+        
+        # Apply offset and normalize
+        num_genes -= NORMALIZE_OFFSET
+        if num_genes <= 0:
             num_genes = 1
         
+        # Get average of weight differences
         if len(weight_difference) > 0:
             avg_weight_difference = np.mean(weight_difference)
         else:
