@@ -5,7 +5,9 @@ Author: Drew Curran
 '''
 
 import os
-os.chdir(os.path.dirname(__file__))
+import sys
+
+sys.path.insert(1, os.path.dirname(__file__) + '\\..')
 
 import numpy as np
 import argparse
@@ -98,10 +100,10 @@ def train(game_label, num_iters, population_size, games_per_player, new):
     num_total_iters = i + num_iters
     while i < num_total_iters:
         # Generate new players
-        players = population.new_generation()
+        population.new_generation()
 
         # Play games
-        wins = game.play_game(players)
+        wins = game.play_game(population.players)
 
         # Enforce natural selection
         population.update_generation()
