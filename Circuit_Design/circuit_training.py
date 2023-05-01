@@ -5,7 +5,7 @@ Author: Drew Curran
 '''
 
 import os
-os.chdir('..')
+os.chdir(os.path.dirname(__file__))
 
 import numpy as np
 import argparse

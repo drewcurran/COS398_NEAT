@@ -118,6 +118,6 @@ class Species:
         if len(weight_difference) > 0:
             avg_weight_difference = np.mean(weight_difference)
         else:
-            avg_weight_difference = 0
+            avg_weight_difference = float('inf')
 
         return EXCESS_DISJOINT_COEFF * excess_disjoint / num_genes + WEIGHT_DIFF_COEFF * avg_weight_difference

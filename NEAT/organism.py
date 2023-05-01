@@ -14,6 +14,7 @@ from NEAT.history import InnovationMarker
 from NEAT.parameters import MAX_WEIGHT
 from NEAT.parameters import PR_INHERIT_FITTER, PR_ENABLE
 from NEAT.parameters import PR_MUTATE_NEURON, PR_MUTATE_GENE, PR_MUTATE_WEIGHTS
+from NEAT.parameters import SIGMOID_SCALE
 
 class Organism:
     def __init__(self, num_inputs:int, num_outputs:int, num_layers:int=2):
@@ -122,7 +123,7 @@ class Organism:
         # Retrieve output values
         out = []
         for neuron in self.neurons[self.num_layers - 1]:
-            sigmoid = 1 / (1 + np.exp(-neuron.input_value))
+            sigmoid = 1 / (1 + np.exp(-SIGMOID_SCALE * neuron.input_value))
             out.append(sigmoid)
         
         return out

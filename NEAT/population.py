@@ -92,6 +92,13 @@ class Population:
             player = self.players[i]
             if i >= len(self.species):
                 self.find_species(player).add_player(player)
+
+        # If species only contains one player, attempt to find a different species
+        for species in self.species[:]:
+            if len(species.players) == 1:
+                player = species.players[0]
+                self.species.remove(species)
+                self.find_species(player).add_player(player)
         
         # Adjust threshold distance based on number of species
         if self.generation > GENERATION_GRACE:

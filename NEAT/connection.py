@@ -9,6 +9,7 @@ import numpy as np
 from NEAT.node import Node
 from NEAT.parameters import MAX_WEIGHT
 from NEAT.parameters import PR_WEIGHT_RANDOM, WEIGHT_PERTURB
+from NEAT.parameters import LEAKY_RELU_SCALE
 
 class Connection:
     def __init__(self, label:int, from_node:Node, to_node:Node, weight:float, enabled:bool=True):
@@ -39,8 +40,8 @@ class Connection:
             if self.from_node.layer == 0:
                 self.to_node.input_value += self.from_node.input_value * self.weight
             else:
-                sigmoid = 1 / (1 + np.exp(-self.from_node.input_value))
-                self.to_node.input_value += sigmoid * self.weight
+                leaky_relu = self.from_node.input_value if self.from_node.input_value > 0 else LEAKY_RELU_SCALE * self.from_node.input_value
+                self.to_node.input_value += leaky_relu * self.weight
 
     ### To string
     def __str__(self):
