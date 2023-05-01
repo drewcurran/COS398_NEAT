@@ -4,11 +4,16 @@ Description: An individual with a genome and fitness.
 Author: Drew Curran
 '''
 
+from __future__ import annotations
 import numpy as np
 from matplotlib import pyplot as plt
 
 from NEAT.node import Node
 from NEAT.connection import Connection
+from NEAT.history import InnovationMarker
+from NEAT.parameters import MAX_WEIGHT
+from NEAT.parameters import PR_INHERIT_FITTER, PR_ENABLE
+from NEAT.parameters import PR_MUTATE_NEURON, PR_MUTATE_GENE, PR_MUTATE_WEIGHTS
 
 class Organism:
     def __init__(self, num_inputs:int, num_outputs:int, num_layers:int=2):
@@ -35,11 +40,67 @@ class Organism:
         for _ in range(self.num_outputs):
             self.add_neuron(self.num_neurons, self.num_layers - 1)
         self.neurons = dict(sorted(self.neurons.items()))
-    
-    ### Give fitness value to organism
-    def set_fitness(self, fitness:float):
-        self.fitness = fitness
 
+    ### Crossover with another parent
+    def crossover(self, innovations: list[InnovationMarker], partner: Organism) -> Organism:
+        # Create skeleton for child genome
+        child = Organism(self.num_inputs, self.num_outputs, num_layers=self.num_layers)
+
+        # Use neurons of the parent
+        for layer, layer_neurons in sorted(self.neurons.items(), reverse=True):
+            if layer != 0 and layer != self.num_layers - 1:
+                for neuron in layer_neurons:
+                    child.add_neuron(neuron.label, neuron.layer)
+
+        # Crossover for connection genes
+        for gene in self.genes:
+            label = gene.label
+            from_node = child.get_neuron(gene.from_node.label)
+            to_node = child.get_neuron(gene.to_node.label)
+
+            partner_gene = partner.get_gene(label)
+
+            # Shared innovation
+            if partner_gene is not None:
+                # Weight inheritance
+                if np.random.uniform() < PR_INHERIT_FITTER:
+                    weight = gene.weight
+                else:
+                    weight = partner_gene.weight
+
+                # Determine whether the gene is enabled
+                if not gene.enabled or not partner_gene.enabled:
+                    enabled = np.random.uniform() < PR_ENABLE
+                else:
+                    enabled = True
+            
+            # Excess or disjoint innovation
+            else:
+                weight = gene.weight
+                enabled = True
+            
+            child.add_gene(innovations, from_node, to_node, weight, enabled=enabled)
+        
+        return child
+    
+    def clone(self, innovations: list[InnovationMarker]) -> Organism:
+        # Create skeleton for child genome
+        child = Organism(self.num_inputs, self.num_outputs, num_layers=self.num_layers)
+
+        # Use neurons of the parent
+        for layer, layer_neurons in sorted(self.neurons.items(), reverse=True):
+            if layer != 0 and layer != self.num_layers - 1:
+                for neuron in layer_neurons:
+                    child.add_neuron(neuron.label, neuron.layer)
+
+        # Add genes
+        for gene in self.genes:
+            from_node = child.get_neuron(gene.from_node.label)
+            to_node = child.get_neuron(gene.to_node.label)
+            child.add_gene(innovations, from_node, to_node, gene.weight, enabled=gene.enabled)
+        
+        return child
+    
     ### Forward pass through the network
     def output(self, input_values:list[float]) -> list[float]:
         # Reset neuron values
@@ -65,21 +126,61 @@ class Organism:
             out.append(sigmoid)
         
         return out
-
-    ### Get neuron with matching label
-    def get_neuron(self, label:int) -> Node:
-        for layer_neurons in self.neurons.values():
-            for neuron in layer_neurons:
-                if neuron.label == label:
-                    return neuron
-        return None
     
-    ### Get gene with matching label
-    def get_gene(self, label:int) -> Connection:
+    ### Mutate genome
+    def mutate_genome(self, innovations: list[InnovationMarker]):
+        # Mutate neuron
+        if np.random.uniform() < PR_MUTATE_NEURON:
+            self.mutate_neuron(innovations)
+        
+        # Mutate gene
+        if np.random.uniform() < PR_MUTATE_GENE or len(self.genes) == 0:
+            self.mutate_gene(innovations)
+        
+        # Mutate weights
+        if np.random.uniform() < PR_MUTATE_WEIGHTS:
+            self.mutate_weights()
+    
+    ### Mutate the genome by adding a new neuron
+    def mutate_neuron(self, innovations: list[InnovationMarker]):
+        # Find a gene to split
+        gene = self.find_split_gene()
+        if gene is None:
+            return
+
+        # Adjust layers if applicable
+        neuron_layer = gene.from_node.layer + 1
+        if neuron_layer == gene.to_node.layer:
+            self.adjust_layers(neuron_layer)
+
+        # Add a new neuron
+        neuron = self.add_neuron(self.num_neurons, neuron_layer)
+
+        # Make connection between from neuron and new neuron
+        self.add_gene(innovations, gene.from_node, neuron, 1)
+
+        # Make connection between new neuron and to neuron
+        self.add_gene(innovations, neuron, gene.to_node, gene.weight)
+
+        # Make connection between bias neuron and new neuron
+        self.add_gene(innovations, self.bias, neuron, 0)
+
+    ### Mutate genome by adding a new connection
+    def mutate_gene(self, innovations: list[InnovationMarker]):
+        # Find a gene to mutate
+        gene = self.find_mutate_gene()
+        if gene is None:
+            return
+        else:
+            from_neuron, to_neuron = gene
+        
+        # Make connection between from neuron and to neuron
+        self.add_gene(innovations, from_neuron, to_neuron, np.random.uniform(-MAX_WEIGHT, MAX_WEIGHT))
+    
+    ### Mutate genome by modifying weights
+    def mutate_weights(self):
         for gene in self.genes:
-            if gene.innovation_label == label:
-                return gene
-        return None
+            gene.mutate_weight()
     
     ### Find a gene to split
     def find_split_gene(self) -> tuple[Node, Node] | None:
@@ -153,12 +254,22 @@ class Organism:
         neuron = Node(label, layer)
         self.neurons[layer].append(neuron)
         self.num_neurons += 1
+        return neuron
     
     ### Add a gene to the genome
-    def add_gene(self, label:int, from_neuron:Node, to_neuron:Node, weight:float, enabled:bool=True):
-        gene = Connection(label, from_neuron, to_neuron, weight, enabled=enabled)
+    def add_gene(self, innovations: list[InnovationMarker], from_neuron:Node, to_neuron:Node, weight:float, enabled:bool=True):
+        # Find mutation if it exists
+        for mutation in innovations:
+            if mutation.matches(self, from_neuron.label, to_neuron.label):
+                self.innovation_labels.append(mutation.innovation_label)
+                self.genes.append(Connection(mutation.innovation_label, from_neuron, to_neuron, weight))
+                return
+        
+        # Add to history if mutation doesn't exist already
+        innovations.append(InnovationMarker(len(innovations), from_neuron.label, to_neuron.label, self.innovation_labels))
+        self.innovation_labels.append(len(innovations))
+        gene = Connection(len(innovations), from_neuron, to_neuron, weight, enabled=enabled)
         self.genes.append(gene)
-        self.innovation_labels.append(label)
     
     ### Determine if two neurons are connected
     def is_gene(self, neuron1:Node, neuron2:Node) -> bool:
@@ -174,6 +285,25 @@ class Organism:
                     return True
         return False
     
+    ### Give fitness value to organism
+    def set_fitness(self, fitness:float):
+        self.fitness = fitness
+
+    ### Get neuron with matching label
+    def get_neuron(self, label:int) -> Node:
+        for layer_neurons in self.neurons.values():
+            for neuron in layer_neurons:
+                if neuron.label == label:
+                    return neuron
+        return None
+    
+    ### Get gene with matching neurons
+    def get_gene(self, label:int):
+        for gene in self.genes:
+            if label == gene.label:
+                return gene
+        return None
+
     ### Print state of the genome
     def print_state(self):
         print("State\nNeurons: %d (%d), %s\nConnections: %d, %s\n" % (self.num_neurons, self.num_layers, self.neurons, len(self.genes), self.genes))
@@ -199,4 +329,4 @@ class Organism:
         # Config
         plt.axis('scaled')
         plt.axis('off')
-        plt.plot()
+        plt.show()

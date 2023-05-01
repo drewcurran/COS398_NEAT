@@ -12,7 +12,7 @@ from NEAT.parameters import PR_WEIGHT_RANDOM, WEIGHT_PERTURB
 
 class Connection:
     def __init__(self, label:int, from_node:Node, to_node:Node, weight:float, enabled:bool=True):
-      self.innovation_label = label
+      self.label = label
       self.from_node = from_node
       self.to_node = to_node
       self.weight = weight
@@ -40,11 +40,10 @@ class Connection:
                 self.to_node.input_value += self.from_node.input_value * self.weight
             else:
                 sigmoid = 1 / (1 + np.exp(-self.from_node.input_value))
-                relu = self.from_node.input_value if self.from_node.input_value > 0 else 0
-                self.to_node.input_value += relu * self.weight
+                self.to_node.input_value += sigmoid * self.weight
 
     ### To string
     def __str__(self):
-        return "C(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.innovation_label, self.enabled)
+        return "C(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.label, self.enabled)
     def __repr__(self):
-        return "C(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.innovation_label, self.enabled)
+        return "C(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.label, self.enabled)
