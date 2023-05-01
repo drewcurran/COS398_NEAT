@@ -42,6 +42,11 @@ class Organism:
 
     ### Forward pass through the network
     def output(self, input_values:list[float]) -> list[float]:
+        # Reset neuron values
+        for layer_neurons in self.neurons.values():
+            for neuron in layer_neurons:
+                neuron.input_value = 0
+
         # Give values to the neurons in the input layer
         for neuron in self.neurons[0]:
             neuron.input_value = input_values[neuron.label]
@@ -58,11 +63,6 @@ class Organism:
         for neuron in self.neurons[self.num_layers - 1]:
             sigmoid = 1 / (1 + np.exp(-neuron.input_value))
             out.append(sigmoid)
-        
-        # Reset neuron values
-        for layer_neurons in self.neurons.values():
-            for neuron in layer_neurons:
-                neuron.input_value = 0
         
         return out
 
@@ -93,10 +93,9 @@ class Organism:
             return None
 
         # Find a connection without the bias node (bias should not be disconnected)
-        gene = self.genes[np.random.randint(len(self.genes))]
-        
+        gene = np.random.choice(self.genes)
         while gene.from_node == self.bias:
-            gene = self.genes[np.random.randint(len(self.genes))]
+            gene = np.random.choice(self.genes)
         
         # Disable the connection
         gene.enabled = False

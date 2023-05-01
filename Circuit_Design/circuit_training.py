@@ -4,11 +4,10 @@ Description: Circuit design application and training for the NEAT algorithm.
 Author: Drew Curran
 '''
 
-import sys
-sys.path.append('C:\\Users\\drewc\\Documents\\GitHub\\COS398_CatanAI\\')
+import os
+os.chdir('..')
 
 import numpy as np
-from matplotlib import pyplot as plt
 import argparse
 import pickle
 

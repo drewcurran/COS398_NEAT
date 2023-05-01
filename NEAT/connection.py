@@ -39,6 +39,7 @@ class Connection:
             if self.from_node.layer == 0:
                 self.to_node.input_value += self.from_node.input_value * self.weight
             else:
+                sigmoid = 1 / (1 + np.exp(-self.from_node.input_value))
                 relu = self.from_node.input_value if self.from_node.input_value > 0 else 0
                 self.to_node.input_value += relu * self.weight
 

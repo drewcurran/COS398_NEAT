@@ -12,8 +12,8 @@ from NEAT.history import InnovationHistory
 from NEAT.parameters import MAX_WEIGHT
 from NEAT.parameters import PR_CLONE, PR_INTERSPECIES, PR_INHERIT_FITTER, PR_ENABLE
 from NEAT.parameters import PR_MUTATE_NEURON, PR_MUTATE_GENE, PR_MUTATE_WEIGHTS
-from NEAT.parameters import GENETIC_DISTANCE, SPECIES_WANTED, DISTANCE_MODIFIER
-from NEAT.parameters import POPULATION_CULL_RATE, SPECIES_CULL_RATE, MAX_STALENESS
+from NEAT.parameters import GENETIC_DISTANCE, SPECIES_WANTED, SPECIES_BUFFER, GENERATION_GRACE, DISTANCE_MODIFIER
+from NEAT.parameters import POPULATION_CULL_RATE, MAX_STALENESS
 
 class Population:
     def __init__(self, num_players:int, num_inputs:int, num_outputs:int):
@@ -58,18 +58,19 @@ class Population:
         while len(players) < self.population_size:
             # Clone from a single parent
             if np.random.uniform() < PR_CLONE:
-                parent = self.players[np.random.randint(len(self.players))]
+                parent = np.random.choice(self.players)
                 child = self.clone(parent)
 
             # Crossover between two parents
             else:
                 if np.random.uniform() < PR_INTERSPECIES:
-                    parent1 = self.players[np.random.randint(len(self.players))]
-                    parent2 = self.players[np.random.randint(len(self.players))]
+                    parent1 = np.random.choice(self.players)
+                    parent2 = np.random.choice(self.players)
                 else:
-                    species = self.species[np.random.randint(len(self.species))]
-                    parent1 = species.players[np.random.randint(len(species.players))]
-                    parent2 = species.players[np.random.randint(len(species.players))]
+                    avg_fitness_sum = np.sum(list(map(lambda s: s.average_fitness, self.species)))
+                    species = np.random.choice(self.species, p=list(map(lambda s: s.average_fitness / avg_fitness_sum, self.species)))
+                    parent1 = np.random.choice(species.players)
+                    parent2 = np.random.choice(species.players)
                 child = self.crossover(parent1, parent2)
             
             # Add child to player list
@@ -80,8 +81,10 @@ class Population:
     
     ### Mutate player genomes
     def mutate(self):
-        for player in self.players:
-            self.mutate_genome(player)
+        for i in range(len(self.players)):
+            player = self.players[i]
+            if i >= len(self.species):
+                self.mutate_genome(player)
 
     ### Separate players into species
     def speciate(self):
@@ -89,47 +92,46 @@ class Population:
         for species in self.species:
             species.reset_species()
         
-        # Determine closest species
-        for player in self.players:
-            min_distance = float('inf')
-            for i in range(len(self.species)):
-                distance = self.species[i].genome_distance(player)
-                if distance < self.species_threshold:
-                    if distance < min_distance:
-                        closest_species = i
-                        min_distance = distance
-            
-            # Add new species if no species is close enough
-            if min_distance > self.species_threshold:
-                closest_species = len(self.species)
-                self.species.append(Species())
+        # Add each player to a close species
+        for i in range(len(self.players)):
+            player = self.players[i]
+            if i >= len(self.species):
+                self.find_species(player).add_player(player)
 
-            # Assign player to closest species
-            self.species[closest_species].add_player(player)
+        # If species only contains one player, attempt to find a different species
+        for species in self.species[:]:
+            if len(species.players) == 1:
+                player = species.players[0]
+                self.species.remove(species)
+                self.find_species(player).add_player(player)
         
         # Adjust threshold distance based on number of species
-        if len(self.species) > SPECIES_WANTED:
-            self.species_threshold /= DISTANCE_MODIFIER
-        elif len(self.species) < SPECIES_WANTED:
-            self.species_threshold *= DISTANCE_MODIFIER
+        if self.generation > GENERATION_GRACE:
+            if len(self.species) > SPECIES_WANTED + SPECIES_BUFFER:
+                self.species_threshold += GENETIC_DISTANCE * DISTANCE_MODIFIER
+            elif len(self.species) < SPECIES_WANTED - SPECIES_BUFFER:
+                self.species_threshold -= GENETIC_DISTANCE * DISTANCE_MODIFIER
 
     def cull(self):
         # Cull population lightly
         self.players.sort(key=lambda k: k.fitness, reverse=True)
-        desired_size = int((len(self.players) * POPULATION_CULL_RATE))
+        desired_size = int((len(self.players) * (1 - POPULATION_CULL_RATE)))
         self.players = self.players[0:desired_size+1]
 
         # Cull within species
         for species in self.species:
-            species.sort()
             culled_players = species.cull()
             for player in culled_players:
                 if player in self.players:
                     self.players.remove(player)
-
+    
     ### Update species based on performance
     def update_species(self):
-        # Sort species according to fitness
+        # Update properties of species
+        for species in self.species:
+            species.update()
+
+        # Sort species according to max fitness
         self.species.sort(key=lambda k: k.fittest_player.fitness, reverse=True)
         self.max_fitness = self.species[0].fittest_player.fitness
 
@@ -275,4 +277,15 @@ class Population:
             child.add_gene(gene.innovation_label, from_node, to_node, gene.weight, enabled=gene.enabled)
         
         return child
+    
+    ### Find close species for a player
+    def find_species(self, player:Organism) -> Species:
+        # Find close species
+        for species in self.species:
+            if species.genome_distance(player) < self.species_threshold:
+                return species
         
+        # Add new species if no species is close enough
+        species = Species()
+        self.species.append(species)
+        return species
