@@ -4,8 +4,6 @@ Description: Parameters specified for algorithm
 Author: Drew Curran
 '''
 
-import numpy as np
-
 # Restrictions
 MAX_WEIGHT = 1.0
 
@@ -38,9 +36,3 @@ SIGMOID_SCALE = 1.0
 # Selection
 SPECIES_CULL_RATE = 0.5
 MAX_STALENESS = 15
-
-def leaky_relu(value):
-    return value if value > 0 else LEAKY_RELU_SCALE * value
-
-def sigmoid(value):
-    return 1 / (1 + np.exp(-value))

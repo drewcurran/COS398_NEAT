@@ -8,6 +8,7 @@ import numpy as np
 
 from NEAT.organism import Organism
 from NEAT.history import InnovationMarker
+from NEAT.parameters import MAX_WEIGHT
 from NEAT.parameters import PR_CLONE
 from NEAT.parameters import GENE_OFFSET, EXCESS_DISJOINT_COEFF, WEIGHT_DIFF_COEFF
 from NEAT.parameters import SPECIES_CULL_RATE
@@ -118,6 +119,6 @@ class Species:
         if len(weight_difference) > 0:
             avg_weight_difference = np.mean(weight_difference)
         else:
-            avg_weight_difference = float('inf')
+            avg_weight_difference = MAX_WEIGHT
 
         return EXCESS_DISJOINT_COEFF * excess_disjoint / num_genes + WEIGHT_DIFF_COEFF * avg_weight_difference

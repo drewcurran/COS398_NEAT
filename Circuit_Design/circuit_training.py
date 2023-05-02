@@ -6,8 +6,7 @@ Author: Drew Curran
 
 import os
 import sys
-
-sys.path.insert(1, os.path.dirname(__file__) + '\\..')
+sys.path.append(os.path.dirname(__file__) + '\\..')
 
 import numpy as np
 import argparse
@@ -111,7 +110,7 @@ def train(game_label, num_iters, population_size, games_per_player, new):
         # Get the stats from the training iteration
         try:
             agent_wins.append(np.sum(wins))
-            num_innovations.append(len(population.innovation_history))
+            num_innovations.append(len(population.innovations))
             num_species.append(len(population.species))
             avg_fitness.append(population.sum_average_fitness / len(population.species))
             max_fitness.append(population.max_fitness)

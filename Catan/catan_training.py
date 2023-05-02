@@ -6,6 +6,7 @@ Author: Drew Curran
 
 import sys
 sys.path.append('C:\\Users\\drewc\\Documents\\GitHub\\COS398_CatanAI\\')
+sys.path.append('C:\\Users\\denis\\Documents\\GitHub\\COS398_CatanAI\\')
 
 import pickle
 import argparse
@@ -25,7 +26,6 @@ def parse_args():
     parser.add_argument('-g', '--games', help='games per player in population', required=True, type=int)
     parser.add_argument('-n', '--new', help='create new population', action='store_true')
     parser.add_argument('-q', '--quiet', help='hide round progress', action='store_true')
-    parser.add_argument('-s', '--no-speciation', help='disable dividing population into species', action='store_false')
     args = parser.parse_args()
     return args
 
@@ -34,7 +34,7 @@ def print_stats(iteration, num_wins, num_innovations, num_species, avg_fitness, 
     print("Iteration: %d, Wins: %d, Innovations: %s, Species: %d, Average Fitness: %.4f, Max Fitness: %.4f" % (iteration, num_wins, num_innovations, num_species, avg_fitness, max_fitness))
 
 ### Train the neural network
-def train(num_iters, population_size, games_per_player, new, quiet, speciation):
+def train(num_iters, population_size, games_per_player, new, quiet):
     game_agents = [NEATPlayer(Color.ORANGE), RandomPlayer(Color.RED), RandomPlayer(Color.BLUE), RandomPlayer(Color.WHITE)]
     agent = game_agents[0]
 
@@ -42,7 +42,7 @@ def train(num_iters, population_size, games_per_player, new, quiet, speciation):
     num_actions = len(ACTION_TYPES)
 
     if new:
-        population = Population(population_size, num_features, num_actions, speciation)
+        population = Population(population_size, num_features, num_actions)
         agent_wins = []
         num_innovations = []
         num_species = []
@@ -75,7 +75,7 @@ def train(num_iters, population_size, games_per_player, new, quiet, speciation):
     num_total_iters = i + num_iters
     while i < num_total_iters:
         # Generate new players
-        players = population.new_generation()
+        population.new_generation()
 
         # Save progress
         if i % 5 == 0:
@@ -99,14 +99,14 @@ def train(num_iters, population_size, games_per_player, new, quiet, speciation):
                 print("Failed to save.")
 
         # Play games
-        wins, _, _ = play_batch(games_per_player, game_agents, population_players=players, quiet=quiet)
+        wins, _, _ = play_batch(games_per_player, game_agents, population_players=population.players, quiet=quiet)
 
         # Normalize fitness
-        max_player_fitness = max(player.fitness for player in players)
-        min_player_fitness = min(player.fitness for player in players)
+        max_player_fitness = max(player.fitness for player in population.players)
+        min_player_fitness = min(player.fitness for player in population.players)
         if max_player_fitness == min_player_fitness:
             min_player_fitness = 0
-        for player in players:
+        for player in population.players:
             player.fitness = (player.fitness - min_player_fitness) / (max_player_fitness - min_player_fitness)
 
         # Enforce natural selection
@@ -115,7 +115,7 @@ def train(num_iters, population_size, games_per_player, new, quiet, speciation):
         # Get the stats from the training iteration
         try:
             agent_wins.append(wins[agent.color])
-            num_innovations.append(len(population.innovation_history))
+            num_innovations.append(len(population.innovations))
             num_species.append(len(population.species))
             avg_fitness.append(population.sum_average_fitness / len(population.species))
             max_fitness.append(population.max_fitness)
@@ -132,9 +132,8 @@ def main():
     games_per_player = args.games
     new = args.new
     quiet = args.quiet
-    speciation = args.no_speciation
 
-    train(num_iters, population_size, games_per_player, new, quiet, speciation)
+    train(num_iters, population_size, games_per_player, new, quiet)
     
 if __name__ == '__main__':
     main()

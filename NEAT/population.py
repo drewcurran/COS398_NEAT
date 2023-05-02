@@ -143,7 +143,7 @@ class Population:
     def find_species(self, player:Organism) -> Species:
         # Find close species
         for species in self.species:
-            if species.genome_distance(player) < self.species_threshold:
+            if species.genome_distance(player) <= self.species_threshold:
                 return species
         
         # Add new species if no species is close enough
