@@ -4,8 +4,9 @@ Description: Circuit design application and training for the NEAT algorithm.
 Author: Drew Curran
 '''
 
+import os
 import sys
-sys.path.append('C:\\Users\\drewc\\Documents\\GitHub\\COS398_CatanAI\\')
+sys.path.append(os.path.dirname(__file__) + '\\..')
 
 import numpy as np
 import argparse
@@ -98,10 +99,10 @@ def train(game_label, num_iters, population_size, games_per_player, new):
     num_total_iters = i + num_iters
     while i < num_total_iters:
         # Generate new players
-        players = population.new_generation()
+        population.new_generation()
 
         # Play games
-        wins = game.play_game(players)
+        wins = game.play_game(population.players)
 
         # Enforce natural selection
         population.update_generation()
@@ -109,7 +110,7 @@ def train(game_label, num_iters, population_size, games_per_player, new):
         # Get the stats from the training iteration
         try:
             agent_wins.append(np.sum(wins))
-            num_innovations.append(len(population.innovation_history))
+            num_innovations.append(len(population.innovations))
             num_species.append(len(population.species))
             avg_fitness.append(population.sum_average_fitness / len(population.species))
             max_fitness.append(population.max_fitness)

@@ -18,6 +18,6 @@ class Node:
     
     ### To string
     def __str__(self):
-        return "Node(%d,L=%d)" % (self.label, self.layer)
+        return "N(%d)" % self.label
     def __repr__(self):
-        return "Node(%d,L=%d)" % (self.label, self.layer)       
+        return "N(%d)" % self.label     

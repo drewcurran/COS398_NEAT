@@ -1,27 +1,28 @@
 '''
-connection_gene.py
-Description: The connection gene links two nodes as input and output due to a weight.
+connection.py
+Description: Links two nodes as input and output due to a weight.
 Author: Drew Curran
 '''
 
 import numpy as np
 
-from NEAT.helper_functions import relu
+from NEAT.node import Node
 from NEAT.parameters import MAX_WEIGHT
 from NEAT.parameters import PR_WEIGHT_RANDOM, WEIGHT_PERTURB
+from NEAT.parameters import LEAKY_RELU_SCALE
 
 class Connection:
-    def __init__(self, from_node, to_node, weight, innovation_label, enabled=True):
+    def __init__(self, label:int, from_node:Node, to_node:Node, weight:float, enabled:bool=True):
+      self.label = label
       self.from_node = from_node
       self.to_node = to_node
       self.weight = weight
-      self.innovation_label = innovation_label
       self.enabled = enabled
     
     ### Change the weight
     def mutate_weight(self):
-        # Mutate 10% of the time
-        if (np.random.uniform() < PR_WEIGHT_RANDOM):
+        # Mutate weight randomly
+        if np.random.uniform() < PR_WEIGHT_RANDOM:
             self.weight = np.random.uniform(-MAX_WEIGHT, MAX_WEIGHT)
         # Slight change if not mutated
         else:
@@ -39,20 +40,11 @@ class Connection:
             if self.from_node.layer == 0:
                 self.to_node.input_value += self.from_node.input_value * self.weight
             else:
-                self.to_node.input_value += relu(self.from_node.input_value) * self.weight
-
-    ### Return a copy
-    def clone(self, from_node, to_node):
-        clone = Connection(from_node, to_node, self.weight, self.innovation_label, enabled=self.enabled)
-        return clone
-    
-    ### Modify connection 
-    def modify(self, weight, enabled):
-        self.weight = weight
-        self.enabled = enabled
+                leaky_relu = self.from_node.input_value if self.from_node.input_value > 0 else LEAKY_RELU_SCALE * self.from_node.input_value
+                self.to_node.input_value += leaky_relu * self.weight
 
     ### To string
     def __str__(self):
-        return "Gene(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.innovation_label, self.enabled)
+        return "C(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.label, self.enabled)
     def __repr__(self):
-        return "Gene(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.innovation_label, self.enabled)
+        return "C(%s->%s,W=%.4f,I=%d,E=%d)" % (self.from_node, self.to_node, self.weight, self.label, self.enabled)
